@@ -48,8 +48,13 @@ html {
     box-shadow: 0 0 0 0.125rem #f090f0;
 }
 
-#MenuBar {
-    vertical-align: middle;
+#SaveAsInput,
+#LoadInput {
+    display: none;
+}
+
+.menu-bar-button {
+    
 }
 
 #CanvasContainer {
@@ -73,23 +78,22 @@ html {
 }
 
 /** 
-* The lengths here have to be in pixels to prevent the text from getting too 
-* big when the canvas elements are scaled up.
+* The lengths that follow have to be in pixels to prevent the text from getting
+* too big when the canvas elements are scaled up.
 */
+#MenuBar {
+    height: 32px;
+    align-items: center;
+}
+
 #MainRow {
-    max-height: calc(100vh - 128px);
+    max-height: calc(100vh - 160px);
 }
 
 #DimensionInputs {
     align-items: center;
     text-align: center;
-    font-size: 16px;
     height: 32px;
-
-}
-
-.dim-input {
-    font-size: 16px;
 }
 
 #DimensionInputs label {
@@ -101,7 +105,6 @@ html {
     box-sizing: border-box;
     width: 100vw;
     font-family: monospace;
-    font-size: 16px;
     height: 96px;
     box-sizing: border-box;
 }

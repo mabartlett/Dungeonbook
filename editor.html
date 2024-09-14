@@ -9,11 +9,16 @@
 </head>
 <body>
     <div class="container col">
-        <div id="MenuBar">
-            <label for="SaveInput">Save: </label>
-            <input id="SaveInput" type="file">
-            <label for="LoadInput">Load: </label>
-            <input id="LoadInput" type="file">
+        <div id="MenuBar" class="row">
+            <button id="SaveButton" class="menu-bar-button">Save</button>
+            <button class="menu-bar-button">
+                <label for="SaveAsInput">Save As</label>
+            </button>
+            <input id="SaveAsInput" type="file" accept=".json">
+            <button class="menu-bar-button">
+                <label for="LoadInput">Load</label>
+            </button>
+            <input id="LoadInput" type="file" accept=".json">
         </div>
         <div id="MainRow" class="row grow">
             <aside id="Sidebar" class="row"></aside>
