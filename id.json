@@ -1,0 +1,10 @@
+{
+    "terrain": 0,
+    "interactible": 32,
+    "npc": 48,
+    "enemy": 64,
+    "weapon": 96,
+    "armor": 112,
+    "gem": 128, 
+    "gemslot": 136
+}
