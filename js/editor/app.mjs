@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 import { TERRAIN_TYPE, TileMap } from "./tilemap.mjs";
 export const TW = 16;
 export const TH = 16;
@@ -20,6 +29,7 @@ const FILENAME_SELECTOR = "#FileName";
 const LOAD_SELECTOR = "#LoadInput";
 const SAVE_AS_SELECTOR = "#SaveAsInput";
 const ID_JSON_PATH = "./../../id.json";
+const START_CHAR = "⚑";
 export class App {
     constructor(theTileset) {
         if (theTileset.length == 0) {
@@ -30,9 +40,9 @@ export class App {
             this._selected = 0;
             this._tileMap = new TileMap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
             fetch(ID_JSON_PATH)
-                .then((theResponse) => {
-                return theResponse.json();
-            })
+                .then((theResponse) => __awaiter(this, void 0, void 0, function* () {
+                return yield theResponse.json();
+            }))
                 .then((theData) => {
                 if (theData === undefined) {
                     throw new Error("App could not load id.json correctly");
@@ -147,10 +157,10 @@ export class App {
         }
     }
     mouseHandler(theEvent) {
-        let x = Math.floor(theEvent.offsetX / (TW * SCALING));
-        let y = Math.floor(theEvent.offsetY / (TH * SCALING));
-        let t = this._tileTypes[this._selected];
-        if (theEvent.buttons === DRAW_CLICK) {
+        if (theEvent.buttons === DRAW_CLICK && this._tileTypes !== undefined) {
+            let x = Math.floor(theEvent.offsetX / (TW * SCALING));
+            let y = Math.floor(theEvent.offsetY / (TH * SCALING));
+            let t = this._tileTypes[this._selected];
             if (theEvent.shiftKey) {
                 this._tileMap.assignValue(null, x, y, t);
             }
@@ -208,8 +218,8 @@ export class App {
             ctx.textBaseline = "top";
             ctx.fillStyle = FLAG_COLOR;
             ctx.strokeStyle = GRID_COLOR;
-            ctx.fillText("⚑", this._tileMap.startX * TW, this._tileMap.startY * TH);
-            ctx.strokeText("⚑", this._tileMap.startX * TW, this._tileMap.startY * TH);
+            ctx.fillText(START_CHAR, this._tileMap.startX * TW, this._tileMap.startY * TH);
+            ctx.strokeText(START_CHAR, this._tileMap.startX * TW, this._tileMap.startY * TH);
         }
     }
     drawGrid() {

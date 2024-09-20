@@ -10,7 +10,7 @@
 export class Dungeon {
     /** 
      * Constructs a Dungeon instance. 
-     * @param {object} theDungeon - the object representing the dungeon.
+     * @param theDungeon - the object representing the dungeon.
      */
     constructor(theDungeon?: object) {
         if (theDungeon === undefined) {

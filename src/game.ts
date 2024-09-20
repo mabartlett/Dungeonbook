@@ -24,7 +24,7 @@ export class Game {
 
     /** 
      * Constructs a Game object. 
-     * @param {ImageBitmap[]} theSprites - An array of images, i.e., sprites.
+     * @param theSprites - An array of images, i.e., sprites.
      */
     constructor(theSprites: ImageBitmap[]) {
         this._sprites = theSprites;

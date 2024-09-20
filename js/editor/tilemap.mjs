@@ -27,16 +27,20 @@ export class TileMap {
         }
         else {
             this._terrain.length = theHeight;
+            this._things.length = theHeight;
             for (let i = 0; i < theHeight; i++) {
-                if (Array.isArray(this._terrain[i])) {
+                if (Array.isArray(this._terrain[i]) && Array.isArray(this._things[i])) {
                     let oldWidth = this._terrain[i].length;
                     this._terrain[i].length = theWidth;
+                    this._things[i].length = theWidth;
                     for (let j = oldWidth; j < theWidth; j++) {
                         this._terrain[i][j] = null;
+                        this._things[i][j] = null;
                     }
                 }
                 else {
                     this._terrain[i] = new Array(theWidth).fill(null);
+                    this.things[i] = new Array(theWidth).fill(null);
                 }
             }
         }
@@ -44,7 +48,7 @@ export class TileMap {
     assignValue(theValue, theX, theY, theType) {
         if (theX < 0 || theX >= this._terrain[0].length || theY < 0 ||
             theY >= this._terrain.length) {
-            throw new Error("TileMap.assignValue passed x or y out of bounds.");
+            console.warn("TileMap.assignValue passed x or y out of bounds.");
         }
         else {
             if (theType === TERRAIN_TYPE) {
@@ -70,7 +74,7 @@ export class TileMap {
     assignStart(theX, theY) {
         if (theX < 0 || theX >= this._terrain[0].length || theY < 0 ||
             theY >= this._terrain.length) {
-            throw new Error("TileMap.assignStart passed x or y out of bounds.");
+            console.warn("TileMap.assignStart passed x or y out of bounds.");
         }
         else {
             this._startX = theX;

@@ -68,6 +68,9 @@ const SAVE_AS_SELECTOR = "#SaveAsInput";
 /** The relative path to the id.json file. */
 const ID_JSON_PATH = "./../../id.json";
 
+/** The character used to draw the PC's starting position. */
+const START_CHAR = "⚑";
+
 /** The "model" portion of the program with some domain violations tossed in. */
 export class App {
     /** The array representing the individual tiles. */
@@ -83,9 +86,12 @@ export class App {
     /** Identifies a tile's type based on its order. Inferred from id.json. */
     private _tileTypes: Array<string>
 
+    /** The depth currently being viewed in the editor. */
+    private _currDepth: number;
+
     /**
      * Constructs an App object. 
-     * @param {Array<ImageBitmap>} theTileset - An array representing all tiles.
+     * @param theTileset - An array representing all tiles.
      */ 
     constructor(theTileset: Array<ImageBitmap>) {
         if (theTileset.length == 0) {
@@ -96,8 +102,8 @@ export class App {
             this._tileMap = new TileMap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
             // Initialize _tileTypes.
             fetch(ID_JSON_PATH)
-                .then((theResponse: Response) => {
-                    return theResponse.json()
+                .then(async (theResponse: Response) => {
+                    return await theResponse.json()
                 })
                 .then((theData: Object | undefined) => {
                     if (theData === undefined) {
@@ -132,9 +138,7 @@ export class App {
         }
     }
     
-    /** 
-     * Starts the app by initializing the view and adding event handlers.
-     */
+    /** Starts the app by initializing the view and adding event handlers. */
     start() {
         let html = document.querySelector("html") as HTMLElement;
         html.style.fontSize = `${TH * SCALING}px`;
@@ -202,8 +206,7 @@ export class App {
     
     /**
      * Handles the clicks on the tiles in the sidebar.
-     * @param {Event} theEvent - The event that triggered the calling of this 
-     * function.
+     * @param theEvent - The event that triggered the calling of this function.
      */
     radioHandler(theEvent: Event) {
         if (theEvent.target !== null && theEvent.target instanceof HTMLInputElement) {
@@ -213,8 +216,8 @@ export class App {
     
     /**
      * Sets up the main canvas dimensions.
-     * @param {number} theWidth - The width of the canvas (in tiles).
-     * @param {number} theHeight - The height of the canvas (in tiles).
+     * @param theWidth - The width of the canvas (in tiles).
+     * @param theHeight - The height of the canvas (in tiles).
      */ 
     setCanvasDimensions(theWidth: number, theHeight: number) {
         let canvas = document.querySelector(CANVAS_SELECTOR) as HTMLCanvasElement;
@@ -234,13 +237,13 @@ export class App {
     
     /**
      * Handles mouse clicks, movements, etc. across the main canvas.
-     * @param {MouseEvent} theEvent - The event that triggered the function call.
+     * @param theEvent - The event that triggered the function call.
      */
     mouseHandler(theEvent: MouseEvent) {
-        let x = Math.floor(theEvent.offsetX / (TW * SCALING));
-        let y = Math.floor(theEvent.offsetY / (TH * SCALING));
-        let t = this._tileTypes[this._selected];
-        if (theEvent.buttons === DRAW_CLICK) {
+        if (theEvent.buttons === DRAW_CLICK && this._tileTypes !== undefined) {
+            let x = Math.floor(theEvent.offsetX / (TW * SCALING));
+            let y = Math.floor(theEvent.offsetY / (TH * SCALING));
+            let t = this._tileTypes[this._selected];
             if (theEvent.shiftKey) {                
                 this._tileMap.assignValue(null, x, y, t);
             } else if (theEvent.ctrlKey) {
@@ -256,7 +259,7 @@ export class App {
     
     /** 
      * Handles input on the dimension fields.
-     * @param {InputEvent} theEvent - The event that triggered the function call.
+     * @param theEvent - The event that triggered the function call.
      */
     dimensionHandler(theEvent: InputEvent) {
         let widthEl = document.querySelector(WIDTH_SELECTOR) as HTMLInputElement;
@@ -273,9 +276,7 @@ export class App {
         }
     }
     
-    /**
-     * Draws the tilemap onto the canvas.
-     */
+    /** Draws the tilemap onto the canvas. */
     draw() {
         let canvas = document.querySelector(CANVAS_SELECTOR) as HTMLCanvasElement;
         let ctx = canvas.getContext("2d");
@@ -305,8 +306,10 @@ export class App {
             ctx.textBaseline = "top";
             ctx.fillStyle = FLAG_COLOR;
             ctx.strokeStyle = GRID_COLOR;
-            ctx.fillText("⚑", this._tileMap.startX * TW, this._tileMap.startY * TH);
-            ctx.strokeText("⚑", this._tileMap.startX * TW, this._tileMap.startY * TH);
+            ctx.fillText(START_CHAR, this._tileMap.startX * TW, 
+                this._tileMap.startY * TH);
+            ctx.strokeText(START_CHAR, this._tileMap.startX * TW, 
+                this._tileMap.startY * TH);
         }
     }
     
