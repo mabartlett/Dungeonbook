@@ -1,14 +1,5 @@
-/**
- * @file Contains the TileMap class for the level editor.
- * @author Marcus Bartlett
- */
-/** Represents the array of tiles' numeric values. */
-export default class TileMap {
-    /**
-     * Constructs a TileMap object.
-     * @param {number} theWidth - The number of tiles wide the TileMap is.
-     * @param {number} theHeight - The number of tiles high the TileMap is.
-     */
+export const TERRAIN_TYPE = "terrain";
+export class TileMap {
     constructor(theWidth, theHeight) {
         if (theHeight < 1 || theWidth < 1) {
             throw new Error("TileMap constructor passed non-positive dimensions.");
@@ -17,17 +8,16 @@ export default class TileMap {
             throw new Error("TileMap constructor passed non-integer dimensions.");
         }
         else {
-            this._tiles = new Array(theHeight);
+            this._terrain = new Array(theHeight);
+            this._things = new Array(theHeight);
             for (let i = 0; i < theHeight; i++) {
-                this._tiles[i] = new Array(theWidth).fill(null);
+                this._terrain[i] = new Array(theWidth).fill(null);
+                this._things[i] = new Array(theWidth).fill(null);
             }
+            this._startX = 0;
+            this._startY = 0;
         }
     }
-    /**
-     * Resizes the TileMap based on provided dimensions.
-     * @param {number} theWidth - The number of tiles wide to make the TileMap.
-     * @param {number} theHeight - The number of tiles high to make the TileMap.
-     */
     resize(theWidth, theHeight) {
         if (theHeight < 1 || theWidth < 1) {
             throw new Error("TileMap.resize passed non-positive dimensions");
@@ -36,57 +26,58 @@ export default class TileMap {
             throw new Error("TileMap.resize passed non-integer dimensions.");
         }
         else {
-            this._tiles.length = theHeight;
+            this._terrain.length = theHeight;
             for (let i = 0; i < theHeight; i++) {
-                if (Array.isArray(this._tiles[i])) {
-                    let oldWidth = this._tiles[i].length;
-                    this._tiles[i].length = theWidth;
+                if (Array.isArray(this._terrain[i])) {
+                    let oldWidth = this._terrain[i].length;
+                    this._terrain[i].length = theWidth;
                     for (let j = oldWidth; j < theWidth; j++) {
-                        this._tiles[i][j] = null;
+                        this._terrain[i][j] = null;
                     }
                 }
                 else {
-                    this._tiles[i] = new Array(theWidth).fill(null);
+                    this._terrain[i] = new Array(theWidth).fill(null);
                 }
             }
         }
     }
-    /**
-     * Sets an array element at the given position to the given value.
-     * @param {number | null} theValue - What to assign.
-     * @param {number} theX - The x-coordinate (i.e., the column).
-     * @param {number} theY - The y-coordinate (i.e., the row).
-     */
-    assignValue(theValue, theX, theY) {
-        if (theX < 0 || theX >= this._tiles[0].length || theY < 0 ||
-            theY >= this._tiles.length) {
+    assignValue(theValue, theX, theY, theType) {
+        if (theX < 0 || theX >= this._terrain[0].length || theY < 0 ||
+            theY >= this._terrain.length) {
             throw new Error("TileMap.assignValue passed x or y out of bounds.");
         }
         else {
-            this._tiles[theY][theX] = theValue;
-        }
-    }
-    /** @return {Array<Array<number | null>>} The tilemap */
-    get tiles() {
-        return this._tiles;
-    }
-    /**
-     * Overrides the default behavior of the inherited toString method.
-     * @return A string representation of the TileMap.
-     */
-    toString() {
-        let s = "[\n";
-        for (let i = 0; i < this._tiles.length; i++) {
-            s += "    [";
-            for (let j = 0; j < this._tiles[i].length; j++) {
-                s += String(this._tiles[i][j]);
-                if (j != this._tiles[i].length - 1) {
-                    s += ", ";
-                }
+            if (theType === TERRAIN_TYPE) {
+                this._terrain[theY][theX] = theValue;
             }
-            s += "],\n";
+            else {
+                this._things[theY][theX] = theValue;
+            }
         }
-        s += "];";
-        return s;
+    }
+    get terrain() {
+        return this._terrain;
+    }
+    get startX() {
+        return this._startX;
+    }
+    get startY() {
+        return this._startY;
+    }
+    get things() {
+        return this._things;
+    }
+    assignStart(theX, theY) {
+        if (theX < 0 || theX >= this._terrain[0].length || theY < 0 ||
+            theY >= this._terrain.length) {
+            throw new Error("TileMap.assignStart passed x or y out of bounds.");
+        }
+        else {
+            this._startX = theX;
+            this._startY = theY;
+        }
+    }
+    toString() {
+        return JSON.stringify(this);
     }
 }

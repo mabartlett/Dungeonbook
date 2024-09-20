@@ -1,42 +1,26 @@
-/**
- * @file Contains the App class for the level editor.
- * @author Marcus Bartlett
- */
-import TileMap from "./tilemap.mjs";
-/** The pixel width of each tile. */
+import { TERRAIN_TYPE, TileMap } from "./tilemap.mjs";
 export const TW = 16;
-/** The pixel height of each tile. */
 export const TH = 16;
-/** The degree of scaling when scaling is enabled. */
 const SCALING = 2;
-/** The color of the grid lines. */
 const GRID_COLOR = "#e0e0e0";
-/** The default width (in tiles) of the main canvas. */
+const FLAG_COLOR = "#0000ff";
 const DEFAULT_WIDTH = 16;
-/** The default height (in tiles) of the main canvas. */
 const DEFAULT_HEIGHT = 16;
-/** The CSS selector for the app's sidebar. */
 const SIDEBAR_SELECTOR = "#Sidebar";
-/** The name of the radio button group in the sidebar. */
 const RADIO_NAME = "tiles";
-/** The CSS class for the labels for the tile canvas elements in the sidebar. */
 const TILE_LABEL_CLASS = "tile-label";
-/** The CSS selector for the main canvas. */
 const CANVAS_SELECTOR = "#MainCanvas";
-/** The number code corresponding to the mouse button for drawing. */
 const DRAW_CLICK = 1;
-/** The CSS selector for the output box. */
 const OUTPUT_SELECTOR = "#Output";
-/** The CSS selector for the width input field. */
 const WIDTH_SELECTOR = "#WidthInput";
-/** The CSS selector for the height input field. */
 const HEIGHT_SELECTOR = "#HeightInput";
-/** The "model" portion of the program with some domain violations tossed in. */
+const DIM_SELECTOR = "#DimensionInputs";
+const MENU_SELECTOR = "#MenuBar";
+const FILENAME_SELECTOR = "#FileName";
+const LOAD_SELECTOR = "#LoadInput";
+const SAVE_AS_SELECTOR = "#SaveAsInput";
+const ID_JSON_PATH = "./../../id.json";
 export class App {
-    /**
-     * Constructs an App object.
-     * @param {Array<ImageBitmap>} theTileset - An array representing all tiles.
-     */
     constructor(theTileset) {
         if (theTileset.length == 0) {
             throw new Error("App constructor passed empty tileset array.");
@@ -44,19 +28,50 @@ export class App {
         else {
             this._tileset = theTileset;
             this._selected = 0;
-            this._tile_map = new TileMap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            this._tileMap = new TileMap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            fetch(ID_JSON_PATH)
+                .then((theResponse) => {
+                return theResponse.json();
+            })
+                .then((theData) => {
+                if (theData === undefined) {
+                    throw new Error("App could not load id.json correctly");
+                }
+                else {
+                    this._tileTypes = new Array(theTileset.length);
+                    for (let key in theData) {
+                        if (theData[key] < theTileset.length) {
+                            this._tileTypes[theData[key]] = key;
+                        }
+                        else {
+                            console.warn("Tile ID given to a tile with a " +
+                                "number greater than possible.");
+                        }
+                    }
+                    for (let i = 1; i < this._tileTypes.length; i++) {
+                        if (this._tileTypes[i] === undefined) {
+                            this._tileTypes[i] = this._tileTypes[i - 1];
+                        }
+                    }
+                    if (this._tileTypes.indexOf(TERRAIN_TYPE) < 0) {
+                        console.warn("Custom tileset is missing '" +
+                            TERRAIN_TYPE + "' type:");
+                        console.log(this._tileTypes);
+                    }
+                }
+            })
+                .catch((theError) => {
+                console.error(theError);
+            });
         }
     }
-    /**
-     * Starts the app by initializing the view and adding event handlers.
-     */
     start() {
         let html = document.querySelector("html");
         html.style.fontSize = `${TH * SCALING}px`;
         this.createTileCanvases();
         this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT);
         let output = document.querySelector(OUTPUT_SELECTOR);
-        output.value = this._tile_map.toString();
+        output.value = this._tileMap.toString();
         let canvas = document.querySelector(CANVAS_SELECTOR);
         let width = document.querySelector(WIDTH_SELECTOR);
         let height = document.querySelector(HEIGHT_SELECTOR);
@@ -74,12 +89,9 @@ export class App {
         height.addEventListener("input", (theEvent) => {
             this.dimensionHandler(theEvent);
         });
-        this.drawGrid();
+        this.setSidebarHeight();
+        this.draw();
     }
-    /**
-     * Creates the tile canvas checkbox group in the sidebar and adds
-     * appropriate event handlers.
-     */
     createTileCanvases() {
         for (let i = 0; i < this._tileset.length; i++) {
             let label = document.createElement("label");
@@ -113,24 +125,14 @@ export class App {
             }
         }
     }
-    /**
-     * Handles the clicks on the tiles in the sidebar.
-     * @param {Event} theEvent - The event that triggered the calling of this
-     * function.
-     */
     radioHandler(theEvent) {
         if (theEvent.target !== null && theEvent.target instanceof HTMLInputElement) {
             this._selected = Number(theEvent.target.value);
         }
     }
-    /**
-     * Sets up the main canvas dimensions.
-     * @param {number} theWidth - The width of the canvas (in tiles).
-     * @param {number} theHeight - The height of the canvas (in tiles).
-     */
     setCanvasDimensions(theWidth, theHeight) {
         let canvas = document.querySelector(CANVAS_SELECTOR);
-        this._tile_map.resize(theWidth, theHeight);
+        this._tileMap.resize(theWidth, theHeight);
         canvas.width = TW * theWidth * SCALING;
         canvas.style.width = String(TW * theWidth * SCALING);
         canvas.height = TH * theHeight * SCALING;
@@ -144,68 +146,72 @@ export class App {
             ctx.imageSmoothingEnabled = false;
         }
     }
-    /**
-     * Handles mouse clicks, movements, etc. across the main canvas.
-     * @param {MouseEvent} theEvent - The event that triggered the function call.
-     */
     mouseHandler(theEvent) {
         let x = Math.floor(theEvent.offsetX / (TW * SCALING));
         let y = Math.floor(theEvent.offsetY / (TH * SCALING));
+        let t = this._tileTypes[this._selected];
         if (theEvent.buttons === DRAW_CLICK) {
             if (theEvent.shiftKey) {
-                this._tile_map.assignValue(null, x, y);
+                this._tileMap.assignValue(null, x, y, t);
+            }
+            else if (theEvent.ctrlKey) {
+                this._tileMap.assignStart(x, y);
             }
             else {
-                this._tile_map.assignValue(this._selected, x, y);
+                this._tileMap.assignValue(this._selected, x, y, t);
             }
             this.draw();
             let output = document.querySelector(OUTPUT_SELECTOR);
-            output.value = this._tile_map.toString();
+            output.value = this._tileMap.toString();
         }
     }
-    /**
-     * Handles input on the dimension fields.
-     * @param {InputEvent} theEvent - The event that triggered the function call.
-     */
     dimensionHandler(theEvent) {
         let widthEl = document.querySelector(WIDTH_SELECTOR);
         let heightEl = document.querySelector(HEIGHT_SELECTOR);
         let width = Number.parseInt(widthEl.value);
         let height = Number.parseInt(heightEl.value);
-        if (!Number.isNaN(width) && !Number.isNaN(height)) {
-            this._tile_map.resize(width, height);
+        if (!Number.isNaN(width) && !Number.isNaN(height) &&
+            width >= parseInt(widthEl.min) && height >= parseInt(heightEl.min)) {
+            this._tileMap.resize(width, height);
             this.setCanvasDimensions(width, height);
             this.draw();
             let output = document.querySelector(OUTPUT_SELECTOR);
-            output.value = this._tile_map.toString();
+            output.value = this._tileMap.toString();
         }
     }
-    /**
-     * Draws the tilemap onto the canvas.
-     */
     draw() {
         let canvas = document.querySelector(CANVAS_SELECTOR);
         let ctx = canvas.getContext("2d");
-        let w = this._tile_map.tiles[0].length * TW;
-        let h = this._tile_map.tiles.length * TH;
+        let w = this._tileMap.terrain[0].length * TW;
+        let h = this._tileMap.terrain.length * TH;
         if (ctx === null) {
             console.log("Drawing on main canvas failed.");
         }
         else {
             ctx.clearRect(0, 0, w, h);
             this.drawGrid();
-            for (let i = 0; i < this._tile_map.tiles.length; i++) {
-                for (let j = 0; j < this._tile_map.tiles[i].length; j++) {
-                    let n = this._tile_map.tiles[i][j];
+            for (let i = 0; i < this._tileMap.terrain.length; i++) {
+                for (let j = 0; j < this._tileMap.terrain[i].length; j++) {
+                    let n = this._tileMap.terrain[i][j];
+                    if (typeof n === "number") {
+                        let img = this._tileset[n];
+                        ctx.drawImage(img, j * TW, i * TH);
+                    }
+                    n = this._tileMap.things[i][j];
                     if (typeof n === "number") {
                         let img = this._tileset[n];
                         ctx.drawImage(img, j * TW, i * TH);
                     }
                 }
             }
+            ctx.font = `${TH}px sans-serif`;
+            ctx.textBaseline = "top";
+            ctx.fillStyle = FLAG_COLOR;
+            ctx.strokeStyle = GRID_COLOR;
+            ctx.fillText("⚑", this._tileMap.startX * TW, this._tileMap.startY * TH);
+            ctx.strokeText("⚑", this._tileMap.startX * TW, this._tileMap.startY * TH);
         }
     }
-    /** Draws a grid beneath the tiles. */
     drawGrid() {
         let canvas = document.querySelector(CANVAS_SELECTOR);
         let ctx = canvas.getContext("2d");
@@ -215,15 +221,25 @@ export class App {
         else {
             ctx.beginPath();
             ctx.strokeStyle = GRID_COLOR;
-            for (let i = 0; i < this._tile_map.tiles[0].length; i++) {
+            for (let i = 0; i < this._tileMap.terrain[0].length; i++) {
                 ctx.moveTo((i * TW) - 0.5, 0);
-                ctx.lineTo((i * TW) - 0.5, this._tile_map.tiles.length * TH);
+                ctx.lineTo((i * TW) - 0.5, this._tileMap.terrain.length * TH);
             }
-            for (let i = 0; i < this._tile_map.tiles.length; i++) {
+            for (let i = 0; i < this._tileMap.terrain.length; i++) {
                 ctx.moveTo(0, (i * TH) - 0.5);
-                ctx.lineTo(this._tile_map.tiles[0].length * TW, (i * TH) - 0.5);
+                ctx.lineTo(this._tileMap.terrain[0].length * TW, (i * TH) - 0.5);
             }
             ctx.stroke();
         }
+    }
+    setSidebarHeight() {
+        let row1 = document.querySelector(MENU_SELECTOR);
+        let row2 = document.querySelector(DIM_SELECTOR);
+        let row3 = document.querySelector(OUTPUT_SELECTOR);
+        let h = row1.offsetHeight + row2.offsetHeight + row3.offsetHeight;
+        let sidebar = document.querySelector(SIDEBAR_SELECTOR);
+        sidebar.style.height = `calc(100vh - ${h}px)`;
+    }
+    writeFileName() {
     }
 }

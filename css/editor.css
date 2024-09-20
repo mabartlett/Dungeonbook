@@ -12,6 +12,7 @@ html {
 .container {
     box-sizing: border-box;
     height: 100vh;
+    max-height: 100vh;
     max-width: 100vw;
 }
 
@@ -36,7 +37,7 @@ html {
 }
 
 .tile-label input {
-    appearance: none;
+    display: none;
 }
 
 .tile-label input:hover ~ canvas {
@@ -48,13 +49,35 @@ html {
     box-shadow: 0 0 0 0.125rem #f090f0;
 }
 
+.menu-bar-button,
+.menu-bar-label {
+    appearance: auto;
+    display: block;
+    padding: 4px;
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    border: 1px solid #808080;
+    background-color: #e0e0e0;
+}
+
+#FileName {
+    width: 100%;
+}
+
+.menu-bar-button:hover,
+.menu-bar-label:hover {
+    background-color: #f0f0f0;
+}
+
+#MenuBar {
+    align-items: center;
+}
+
 #SaveAsInput,
 #LoadInput {
     display: none;
-}
-
-.menu-bar-button {
-    
 }
 
 #CanvasContainer {
@@ -67,6 +90,7 @@ html {
     background-color: #808080;
     flex-wrap: wrap;
     width: 6rem;
+    min-width: 6rem;
     justify-content: space-between;
     box-sizing: border-box;
 }
@@ -77,23 +101,9 @@ html {
     background-color: #000000;
 }
 
-/** 
-* The lengths that follow have to be in pixels to prevent the text from getting
-* too big when the canvas elements are scaled up.
-*/
-#MenuBar {
-    height: 32px;
-    align-items: center;
-}
-
-#MainRow {
-    max-height: calc(100vh - 160px);
-}
-
 #DimensionInputs {
     align-items: center;
     text-align: center;
-    height: 32px;
 }
 
 #DimensionInputs label {
@@ -105,6 +115,5 @@ html {
     box-sizing: border-box;
     width: 100vw;
     font-family: monospace;
-    height: 96px;
     box-sizing: border-box;
 }

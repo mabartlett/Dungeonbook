@@ -6,5 +6,6 @@
     "weapon": 96,
     "armor": 112,
     "gem": 128, 
-    "gemslot": 136
+    "gemslot": 136,
+    "other": 144
 }
