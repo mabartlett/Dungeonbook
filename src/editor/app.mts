@@ -113,42 +113,46 @@ export class App {
             this._selected = 0;
             this._tileMap = new TileMap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
             this._currDepth = 0;
-            // Initialize _tileTypes.
-            fetch(ID_JSON_PATH)
-                .then(async (theResponse: Response) => {
-                    return await theResponse.json()
-                })
-                .then((theData: Object | undefined) => {
-                    if (theData === undefined) {
-                        throw new Error("App could not load id.json correctly");
-                    } else {
-                        this._tileTypes = new Array<string>(theTileset.length);
-                        for (let key in theData) {
-                            if (theData[key] < theTileset.length) {
-                                this._tileTypes[theData[key]] = key;
-                            } else {
-                                console.warn("Tile ID given to a tile with a " +
-                                    "number greater than possible."
-                                );
-                            }
-                        }
-                        for (let i = 1; i < this._tileTypes.length; i++) {
-                            if (this._tileTypes[i] === undefined) {
-                                this._tileTypes[i] = this._tileTypes[i - 1];
-                            }
-                        }
-                        if (this._tileTypes.indexOf(TERRAIN_TYPE) < 0) {
-                            console.warn("Custom tileset is missing '" +
-                                TERRAIN_TYPE + "' type:"
+            this._tileTypes = new Array<string>(this._tileset.length);
+        }
+    }
+
+    /** Initializes the _tileTypes field. */
+    async initializeTileTypes() {
+        await fetch(ID_JSON_PATH)
+            .then(async (theResponse: Response) => {
+                return await theResponse.json()
+            })
+            .then((theData: Object | undefined) => {
+                if (theData === undefined) {
+                    throw new Error("App could not load id.json correctly");
+                } else {
+                    
+                    for (let key in theData) {
+                        if (theData[key] < this._tileset.length) {
+                            this._tileTypes[theData[key]] = key;
+                        } else {
+                            console.warn("Tile ID given to a tile with a " +
+                                "number greater than possible."
                             );
-                            console.log(this._tileTypes);
                         }
                     }
-                })
-                .catch((theError: any) => {
-                    console.error(theError);
-                })
-        }
+                    for (let i = 1; i < this._tileTypes.length; i++) {
+                        if (this._tileTypes[i] === undefined) {
+                            this._tileTypes[i] = this._tileTypes[i - 1];
+                        }
+                    }
+                    if (this._tileTypes.indexOf(TERRAIN_TYPE) < 0) {
+                        console.warn("Custom tileset is missing '" +
+                            TERRAIN_TYPE + "' type:"
+                        );
+                        console.log(this._tileTypes);
+                    }
+                }
+            })
+            .catch((theError: any) => {
+                console.error(theError);
+            })
     }
     
     /** Starts the app by initializing the view and adding event handlers. */
@@ -196,6 +200,7 @@ export class App {
      * appropriate event handlers.
      */
     createTileCanvases() {
+        let flag = true;
         for (let i = 0; i < this._tileset.length; i++) {
             let label = document.createElement("label");
             label.setAttribute("class", TILE_LABEL_CLASS);
@@ -216,6 +221,14 @@ export class App {
             canvas.width = TW * SCALING;
             label.append(canvas);
             let sidebar = document.querySelector(SIDEBAR_SELECTOR) as HTMLDivElement;
+            // Add the heading for "things."
+            if (flag && this._tileTypes[i] !== TERRAIN_TYPE) {
+                flag = false;
+                let heading = document.createElement("h1");
+                heading.setAttribute("class", "sidebar-heading");
+                heading.textContent = "Things";
+                sidebar.append(heading);
+            }
             sidebar.append(label);
             let ctx = canvas.getContext("2d");
             if (ctx === null) {

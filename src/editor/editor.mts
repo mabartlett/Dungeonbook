@@ -14,18 +14,17 @@ function main() {
     let img = new Image();
     img.src = IMAGE_SOURCE;
     img.addEventListener("load", () => {
-        let arr = new Array();
+        let arr = new Array<Promise<ImageBitmap>>();
         for (let i = 0; i * TH < img.naturalHeight; i++) {
             for (let j = 0; j * TW < img.naturalWidth; j++) {
                 arr.push(createImageBitmap(img, j * TW, i * TH, TW, TH));
             }
         }
-        Promise.all(arr).then((theTileset) => {
-            // Promises fulfilled.
+        Promise.all(arr).then(async (theTileset) => {
             let app = new App(theTileset);
+            await app.initializeTileTypes();
             app.start();
         }).catch((theError) => {
-            // Promises rejected.
             console.log("Failed to load tiles.");
             console.log(theError);
         });

@@ -30,6 +30,11 @@ html {
     flex-grow: 1;
 }
 
+.sidebar-heading {
+    width: 100%;
+    padding: 4px;
+}
+
 .tile-label {
     display: block;
     margin: 0.125rem;

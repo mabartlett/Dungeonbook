@@ -43,7 +43,12 @@ export class App {
             this._selected = 0;
             this._tileMap = new TileMap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
             this._currDepth = 0;
-            fetch(ID_JSON_PATH)
+            this._tileTypes = new Array(this._tileset.length);
+        }
+    }
+    initializeTileTypes() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield fetch(ID_JSON_PATH)
                 .then((theResponse) => __awaiter(this, void 0, void 0, function* () {
                 return yield theResponse.json();
             }))
@@ -52,9 +57,8 @@ export class App {
                     throw new Error("App could not load id.json correctly");
                 }
                 else {
-                    this._tileTypes = new Array(theTileset.length);
                     for (let key in theData) {
-                        if (theData[key] < theTileset.length) {
+                        if (theData[key] < this._tileset.length) {
                             this._tileTypes[theData[key]] = key;
                         }
                         else {
@@ -77,7 +81,7 @@ export class App {
                 .catch((theError) => {
                 console.error(theError);
             });
-        }
+        });
     }
     start() {
         let html = document.querySelector("html");
@@ -118,6 +122,7 @@ export class App {
         this.draw();
     }
     createTileCanvases() {
+        let flag = true;
         for (let i = 0; i < this._tileset.length; i++) {
             let label = document.createElement("label");
             label.setAttribute("class", TILE_LABEL_CLASS);
@@ -138,6 +143,13 @@ export class App {
             canvas.width = TW * SCALING;
             label.append(canvas);
             let sidebar = document.querySelector(SIDEBAR_SELECTOR);
+            if (flag && this._tileTypes[i] !== TERRAIN_TYPE) {
+                flag = false;
+                let heading = document.createElement("h1");
+                heading.setAttribute("class", "sidebar-heading");
+                heading.textContent = "Things";
+                sidebar.append(heading);
+            }
             sidebar.append(label);
             let ctx = canvas.getContext("2d");
             if (ctx === null) {
