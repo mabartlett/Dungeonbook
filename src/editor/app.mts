@@ -26,6 +26,9 @@ const DEFAULT_WIDTH = 16;
 /** The default height (in tiles) of the main canvas. */
 const DEFAULT_HEIGHT = 16;
 
+/** The default depth (in grids) of the level being edited. */
+const DEFAULT_DEPTH = 1;
+
 /** The CSS selector for the app's sidebar. */
 const SIDEBAR_SELECTOR = "#Sidebar";
 
@@ -49,6 +52,12 @@ const WIDTH_SELECTOR = "#WidthInput";
 
 /** The CSS selector for the height input field. */
 const HEIGHT_SELECTOR = "#HeightInput";
+
+/** The CSS selector for the total depth input field. */
+const TOT_DEPTH_SELECTOR = "#TotDepthInput";
+
+/** The CSS selector for the current depth input field. */
+const CURR_DEPTH_SELECTOR = "#CurrDepthInput";
 
 /** The CSS selector for the row of width and height input fields. */
 const DIM_SELECTOR = "#DimensionInputs";
@@ -86,7 +95,10 @@ export class App {
     /** Identifies a tile's type based on its order. Inferred from id.json. */
     private _tileTypes: Array<string>
 
-    /** The depth currently being viewed in the editor. */
+    /** 
+     * The depth currently being viewed in the editor. Note that this value is 
+     * zero-indexed rather than one-indexed like it is in the editor view.
+     */
     private _currDepth: number;
 
     /**
@@ -100,6 +112,7 @@ export class App {
             this._tileset = theTileset;
             this._selected = 0;
             this._tileMap = new TileMap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            this._currDepth = 0;
             // Initialize _tileTypes.
             fetch(ID_JSON_PATH)
                 .then(async (theResponse: Response) => {
@@ -143,12 +156,14 @@ export class App {
         let html = document.querySelector("html") as HTMLElement;
         html.style.fontSize = `${TH * SCALING}px`;
         this.createTileCanvases();
-        this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_DEPTH);
         let output = document.querySelector(OUTPUT_SELECTOR) as HTMLTextAreaElement;
         output.value = this._tileMap.toString();
         let canvas = document.querySelector(CANVAS_SELECTOR) as HTMLCanvasElement;
         let width = document.querySelector(WIDTH_SELECTOR) as HTMLInputElement;
         let height = document.querySelector(HEIGHT_SELECTOR) as HTMLInputElement;
+        let tDepth = document.querySelector(TOT_DEPTH_SELECTOR) as HTMLInputElement;
+        let cDepth = document.querySelector(CURR_DEPTH_SELECTOR) as HTMLInputElement;
         canvas.addEventListener("mousemove", (theEvent: MouseEvent) => {
             this.mouseHandler(theEvent);
         });
@@ -162,6 +177,15 @@ export class App {
         height.value = String(DEFAULT_HEIGHT);
         height.addEventListener("input", (theEvent: InputEvent) => {
             this.dimensionHandler(theEvent);
+        });
+        tDepth.value = String(DEFAULT_DEPTH);
+        tDepth.addEventListener("input", (theEvent: InputEvent) => {
+            this.dimensionHandler(theEvent);
+        });
+        cDepth.value = String(DEFAULT_DEPTH);
+        cDepth.max = String(DEFAULT_DEPTH);
+        cDepth.addEventListener("input", (theEvent: InputEvent) => {
+            this.depthHandler(theEvent);
         });
         this.setSidebarHeight();
         this.draw();
@@ -218,17 +242,18 @@ export class App {
      * Sets up the main canvas dimensions.
      * @param theWidth - The width of the canvas (in tiles).
      * @param theHeight - The height of the canvas (in tiles).
+     * @param theDepth - The number of levels (in grids).
      */ 
-    setCanvasDimensions(theWidth: number, theHeight: number) {
+    setCanvasDimensions(theWidth: number, theHeight: number, theDepth: number) {
         let canvas = document.querySelector(CANVAS_SELECTOR) as HTMLCanvasElement;
-        this._tileMap.resize(theWidth, theHeight);
+        this._tileMap.resize(theWidth, theHeight, theDepth);
         canvas.width = TW * theWidth * SCALING;
         canvas.style.width = String(TW * theWidth * SCALING);
         canvas.height = TH * theHeight * SCALING;
         canvas.style.height = String(TH * theHeight * SCALING);
         let ctx = canvas.getContext("2d");
         if (ctx === null) {
-            console.log("Failed to set canvas dimensions.");
+            console.warn("Failed to set canvas dimensions.");
         } else {
             ctx.scale(SCALING, SCALING);
             ctx.imageSmoothingEnabled = false;
@@ -241,15 +266,17 @@ export class App {
      */
     mouseHandler(theEvent: MouseEvent) {
         if (theEvent.buttons === DRAW_CLICK && this._tileTypes !== undefined) {
-            let x = Math.floor(theEvent.offsetX / (TW * SCALING));
-            let y = Math.floor(theEvent.offsetY / (TH * SCALING));
+            let x = Math.min(Math.floor(theEvent.offsetX / (TW * SCALING)), 
+                this._tileMap.terrain[0][0].length - 1);
+            let y = Math.min(Math.floor(theEvent.offsetY / (TH * SCALING)), 
+                this._tileMap.terrain[0].length - 1);
             let t = this._tileTypes[this._selected];
             if (theEvent.shiftKey) {                
-                this._tileMap.assignValue(null, x, y, t);
-            } else if (theEvent.ctrlKey) {
+                this._tileMap.assignValue(null, x, y, this._currDepth, t);
+            } else if (theEvent.ctrlKey && this._currDepth === 0) {
                 this._tileMap.assignStart(x, y);
-            } else {
-                this._tileMap.assignValue(this._selected, x, y, t);
+            } else if (!theEvent.ctrlKey) {
+                this._tileMap.assignValue(this._selected, x, y, this._currDepth, t);
             }
             this.draw();
             let output = document.querySelector(OUTPUT_SELECTOR) as HTMLTextAreaElement;
@@ -264,15 +291,38 @@ export class App {
     dimensionHandler(theEvent: InputEvent) {
         let widthEl = document.querySelector(WIDTH_SELECTOR) as HTMLInputElement;
         let heightEl = document.querySelector(HEIGHT_SELECTOR) as HTMLInputElement;
+        let depthEl = document.querySelector(TOT_DEPTH_SELECTOR) as HTMLInputElement;
+        let cdepthEl = document.querySelector(CURR_DEPTH_SELECTOR) as HTMLInputElement;
         let width = Number.parseInt(widthEl.value);
         let height = Number.parseInt(heightEl.value);
-        if (!Number.isNaN(width) && !Number.isNaN(height) && 
-            width >= parseInt(widthEl.min) && height >= parseInt(heightEl.min)) {
-            this._tileMap.resize(width, height);
-            this.setCanvasDimensions(width, height);
+        let depth = Number.parseInt(depthEl.value);
+        if (!Number.isNaN(width) && !Number.isNaN(height) && !Number.isNaN(depth) &&
+            width >= parseInt(widthEl.min) && height >= parseInt(heightEl.min) &&
+            depth >= parseInt(depthEl.min)) {
+            // Remember that the depth is zero-indexed!
+            if (this._currDepth >= depth) {
+                this._currDepth = depth - 1;
+                cdepthEl.value = String(depth);
+            }
+            cdepthEl.max = String(depth);
+            this._tileMap.resize(width, height, depth);
+            this.setCanvasDimensions(width, height, depth);
             this.draw();
             let output = document.querySelector(OUTPUT_SELECTOR) as HTMLTextAreaElement;
             output.value = this._tileMap.toString();
+        }
+    }
+
+    /** 
+     * Handles input on the current depth input field.
+     * @param theEvent - The event that triggered the function call. 
+     */
+    depthHandler(theEvent: InputEvent) {
+        let inputEl = document.querySelector(CURR_DEPTH_SELECTOR) as HTMLInputElement;
+        let depth = Number.parseInt(inputEl.value);
+        if (!Number.isNaN(depth) && depth <= this._tileMap.terrain.length) {
+            this._currDepth = depth - 1;
+            this.draw();
         }
     }
     
@@ -280,21 +330,21 @@ export class App {
     draw() {
         let canvas = document.querySelector(CANVAS_SELECTOR) as HTMLCanvasElement;
         let ctx = canvas.getContext("2d");
-        let w = this._tileMap.terrain[0].length * TW;
-        let h = this._tileMap.terrain.length * TH;
+        let w = this._tileMap.terrain[0][0].length * TW;
+        let h = this._tileMap.terrain[0].length * TH;
         if (ctx === null) {
-            console.log("Drawing on main canvas failed.");
+            console.warn("Drawing on main canvas failed.");
         } else {
             ctx.clearRect(0, 0, w, h);
             this.drawGrid();
-            for (let i = 0; i < this._tileMap.terrain.length; i++) {
-                for (let j = 0; j < this._tileMap.terrain[i].length; j++) {
-                    let n = this._tileMap.terrain[i][j];
+            for (let i = 0; i < this._tileMap.terrain[this._currDepth].length; i++) {
+                for (let j = 0; j < this._tileMap.terrain[this._currDepth][i].length; j++) {
+                    let n = this._tileMap.terrain[this._currDepth][i][j];
                     if (typeof n === "number") {
                         let img = this._tileset[n];
                         ctx.drawImage(img, j * TW, i * TH);
                     }
-                    n = this._tileMap.things[i][j];
+                    n = this._tileMap.things[this._currDepth][i][j];
                     if (typeof n === "number") {
                         let img = this._tileset[n];
                         ctx.drawImage(img, j * TW, i *TH);
@@ -302,14 +352,16 @@ export class App {
                 }
             }
             // Draw the player character's starting position.
-            ctx.font = `${TH}px sans-serif`
-            ctx.textBaseline = "top";
-            ctx.fillStyle = FLAG_COLOR;
-            ctx.strokeStyle = GRID_COLOR;
-            ctx.fillText(START_CHAR, this._tileMap.startX * TW, 
-                this._tileMap.startY * TH);
-            ctx.strokeText(START_CHAR, this._tileMap.startX * TW, 
-                this._tileMap.startY * TH);
+            if (this._currDepth === 0) {
+                ctx.font = `${TH}px sans-serif`
+                ctx.textBaseline = "top";
+                ctx.fillStyle = FLAG_COLOR;
+                ctx.strokeStyle = GRID_COLOR;
+                ctx.fillText(START_CHAR, this._tileMap.startX * TW, 
+                    this._tileMap.startY * TH);
+                ctx.strokeText(START_CHAR, this._tileMap.startX * TW, 
+                    this._tileMap.startY * TH);
+            }
         }
     }
     
@@ -318,17 +370,17 @@ export class App {
         let canvas = document.querySelector(CANVAS_SELECTOR) as HTMLCanvasElement;
         let ctx = canvas.getContext("2d");
         if (ctx === null) {
-            console.log("Drawing grid onto main canvas failed.");
+            console.warn("Drawing grid onto main canvas failed.");
         } else {
             ctx.beginPath();
             ctx.strokeStyle = GRID_COLOR;
-            for (let i = 0; i < this._tileMap.terrain[0].length; i++) {
+            for (let i = 0; i < this._tileMap.terrain[0][0].length; i++) {
                 ctx.moveTo((i * TW) - 0.5, 0);
-                ctx.lineTo((i * TW) - 0.5, this._tileMap.terrain.length * TH);
+                ctx.lineTo((i * TW) - 0.5, this._tileMap.terrain[0].length * TH);
             }
-            for (let i = 0; i < this._tileMap.terrain.length; i++) {
+            for (let i = 0; i < this._tileMap.terrain[0].length; i++) {
                 ctx.moveTo(0, (i * TH) - 0.5);
-                ctx.lineTo(this._tileMap.terrain[0].length * TW, (i * TH) - 0.5);
+                ctx.lineTo(this._tileMap.terrain[0][0].length * TW, (i * TH) - 0.5);
             }
             ctx.stroke();
         }

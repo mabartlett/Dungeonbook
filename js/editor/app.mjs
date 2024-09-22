@@ -15,6 +15,7 @@ const GRID_COLOR = "#e0e0e0";
 const FLAG_COLOR = "#0000ff";
 const DEFAULT_WIDTH = 16;
 const DEFAULT_HEIGHT = 16;
+const DEFAULT_DEPTH = 1;
 const SIDEBAR_SELECTOR = "#Sidebar";
 const RADIO_NAME = "tiles";
 const TILE_LABEL_CLASS = "tile-label";
@@ -23,6 +24,8 @@ const DRAW_CLICK = 1;
 const OUTPUT_SELECTOR = "#Output";
 const WIDTH_SELECTOR = "#WidthInput";
 const HEIGHT_SELECTOR = "#HeightInput";
+const TOT_DEPTH_SELECTOR = "#TotDepthInput";
+const CURR_DEPTH_SELECTOR = "#CurrDepthInput";
 const DIM_SELECTOR = "#DimensionInputs";
 const MENU_SELECTOR = "#MenuBar";
 const FILENAME_SELECTOR = "#FileName";
@@ -39,6 +42,7 @@ export class App {
             this._tileset = theTileset;
             this._selected = 0;
             this._tileMap = new TileMap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            this._currDepth = 0;
             fetch(ID_JSON_PATH)
                 .then((theResponse) => __awaiter(this, void 0, void 0, function* () {
                 return yield theResponse.json();
@@ -79,12 +83,14 @@ export class App {
         let html = document.querySelector("html");
         html.style.fontSize = `${TH * SCALING}px`;
         this.createTileCanvases();
-        this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_DEPTH);
         let output = document.querySelector(OUTPUT_SELECTOR);
         output.value = this._tileMap.toString();
         let canvas = document.querySelector(CANVAS_SELECTOR);
         let width = document.querySelector(WIDTH_SELECTOR);
         let height = document.querySelector(HEIGHT_SELECTOR);
+        let tDepth = document.querySelector(TOT_DEPTH_SELECTOR);
+        let cDepth = document.querySelector(CURR_DEPTH_SELECTOR);
         canvas.addEventListener("mousemove", (theEvent) => {
             this.mouseHandler(theEvent);
         });
@@ -98,6 +104,15 @@ export class App {
         height.value = String(DEFAULT_HEIGHT);
         height.addEventListener("input", (theEvent) => {
             this.dimensionHandler(theEvent);
+        });
+        tDepth.value = String(DEFAULT_DEPTH);
+        tDepth.addEventListener("input", (theEvent) => {
+            this.dimensionHandler(theEvent);
+        });
+        cDepth.value = String(DEFAULT_DEPTH);
+        cDepth.max = String(DEFAULT_DEPTH);
+        cDepth.addEventListener("input", (theEvent) => {
+            this.depthHandler(theEvent);
         });
         this.setSidebarHeight();
         this.draw();
@@ -140,16 +155,16 @@ export class App {
             this._selected = Number(theEvent.target.value);
         }
     }
-    setCanvasDimensions(theWidth, theHeight) {
+    setCanvasDimensions(theWidth, theHeight, theDepth) {
         let canvas = document.querySelector(CANVAS_SELECTOR);
-        this._tileMap.resize(theWidth, theHeight);
+        this._tileMap.resize(theWidth, theHeight, theDepth);
         canvas.width = TW * theWidth * SCALING;
         canvas.style.width = String(TW * theWidth * SCALING);
         canvas.height = TH * theHeight * SCALING;
         canvas.style.height = String(TH * theHeight * SCALING);
         let ctx = canvas.getContext("2d");
         if (ctx === null) {
-            console.log("Failed to set canvas dimensions.");
+            console.warn("Failed to set canvas dimensions.");
         }
         else {
             ctx.scale(SCALING, SCALING);
@@ -158,17 +173,17 @@ export class App {
     }
     mouseHandler(theEvent) {
         if (theEvent.buttons === DRAW_CLICK && this._tileTypes !== undefined) {
-            let x = Math.floor(theEvent.offsetX / (TW * SCALING));
-            let y = Math.floor(theEvent.offsetY / (TH * SCALING));
+            let x = Math.min(Math.floor(theEvent.offsetX / (TW * SCALING)), this._tileMap.terrain[0][0].length - 1);
+            let y = Math.min(Math.floor(theEvent.offsetY / (TH * SCALING)), this._tileMap.terrain[0].length - 1);
             let t = this._tileTypes[this._selected];
             if (theEvent.shiftKey) {
-                this._tileMap.assignValue(null, x, y, t);
+                this._tileMap.assignValue(null, x, y, this._currDepth, t);
             }
-            else if (theEvent.ctrlKey) {
+            else if (theEvent.ctrlKey && this._currDepth === 0) {
                 this._tileMap.assignStart(x, y);
             }
-            else {
-                this._tileMap.assignValue(this._selected, x, y, t);
+            else if (!theEvent.ctrlKey) {
+                this._tileMap.assignValue(this._selected, x, y, this._currDepth, t);
             }
             this.draw();
             let output = document.querySelector(OUTPUT_SELECTOR);
@@ -178,66 +193,85 @@ export class App {
     dimensionHandler(theEvent) {
         let widthEl = document.querySelector(WIDTH_SELECTOR);
         let heightEl = document.querySelector(HEIGHT_SELECTOR);
+        let depthEl = document.querySelector(TOT_DEPTH_SELECTOR);
+        let cdepthEl = document.querySelector(CURR_DEPTH_SELECTOR);
         let width = Number.parseInt(widthEl.value);
         let height = Number.parseInt(heightEl.value);
-        if (!Number.isNaN(width) && !Number.isNaN(height) &&
-            width >= parseInt(widthEl.min) && height >= parseInt(heightEl.min)) {
-            this._tileMap.resize(width, height);
-            this.setCanvasDimensions(width, height);
+        let depth = Number.parseInt(depthEl.value);
+        if (!Number.isNaN(width) && !Number.isNaN(height) && !Number.isNaN(depth) &&
+            width >= parseInt(widthEl.min) && height >= parseInt(heightEl.min) &&
+            depth >= parseInt(depthEl.min)) {
+            if (this._currDepth >= depth) {
+                this._currDepth = depth - 1;
+                cdepthEl.value = String(depth);
+            }
+            cdepthEl.max = String(depth);
+            this._tileMap.resize(width, height, depth);
+            this.setCanvasDimensions(width, height, depth);
             this.draw();
             let output = document.querySelector(OUTPUT_SELECTOR);
             output.value = this._tileMap.toString();
         }
     }
+    depthHandler(theEvent) {
+        let inputEl = document.querySelector(CURR_DEPTH_SELECTOR);
+        let depth = Number.parseInt(inputEl.value);
+        if (!Number.isNaN(depth) && depth <= this._tileMap.terrain.length) {
+            this._currDepth = depth - 1;
+            this.draw();
+        }
+    }
     draw() {
         let canvas = document.querySelector(CANVAS_SELECTOR);
         let ctx = canvas.getContext("2d");
-        let w = this._tileMap.terrain[0].length * TW;
-        let h = this._tileMap.terrain.length * TH;
+        let w = this._tileMap.terrain[0][0].length * TW;
+        let h = this._tileMap.terrain[0].length * TH;
         if (ctx === null) {
-            console.log("Drawing on main canvas failed.");
+            console.warn("Drawing on main canvas failed.");
         }
         else {
             ctx.clearRect(0, 0, w, h);
             this.drawGrid();
-            for (let i = 0; i < this._tileMap.terrain.length; i++) {
-                for (let j = 0; j < this._tileMap.terrain[i].length; j++) {
-                    let n = this._tileMap.terrain[i][j];
+            for (let i = 0; i < this._tileMap.terrain[this._currDepth].length; i++) {
+                for (let j = 0; j < this._tileMap.terrain[this._currDepth][i].length; j++) {
+                    let n = this._tileMap.terrain[this._currDepth][i][j];
                     if (typeof n === "number") {
                         let img = this._tileset[n];
                         ctx.drawImage(img, j * TW, i * TH);
                     }
-                    n = this._tileMap.things[i][j];
+                    n = this._tileMap.things[this._currDepth][i][j];
                     if (typeof n === "number") {
                         let img = this._tileset[n];
                         ctx.drawImage(img, j * TW, i * TH);
                     }
                 }
             }
-            ctx.font = `${TH}px sans-serif`;
-            ctx.textBaseline = "top";
-            ctx.fillStyle = FLAG_COLOR;
-            ctx.strokeStyle = GRID_COLOR;
-            ctx.fillText(START_CHAR, this._tileMap.startX * TW, this._tileMap.startY * TH);
-            ctx.strokeText(START_CHAR, this._tileMap.startX * TW, this._tileMap.startY * TH);
+            if (this._currDepth === 0) {
+                ctx.font = `${TH}px sans-serif`;
+                ctx.textBaseline = "top";
+                ctx.fillStyle = FLAG_COLOR;
+                ctx.strokeStyle = GRID_COLOR;
+                ctx.fillText(START_CHAR, this._tileMap.startX * TW, this._tileMap.startY * TH);
+                ctx.strokeText(START_CHAR, this._tileMap.startX * TW, this._tileMap.startY * TH);
+            }
         }
     }
     drawGrid() {
         let canvas = document.querySelector(CANVAS_SELECTOR);
         let ctx = canvas.getContext("2d");
         if (ctx === null) {
-            console.log("Drawing grid onto main canvas failed.");
+            console.warn("Drawing grid onto main canvas failed.");
         }
         else {
             ctx.beginPath();
             ctx.strokeStyle = GRID_COLOR;
-            for (let i = 0; i < this._tileMap.terrain[0].length; i++) {
+            for (let i = 0; i < this._tileMap.terrain[0][0].length; i++) {
                 ctx.moveTo((i * TW) - 0.5, 0);
-                ctx.lineTo((i * TW) - 0.5, this._tileMap.terrain.length * TH);
+                ctx.lineTo((i * TW) - 0.5, this._tileMap.terrain[0].length * TH);
             }
-            for (let i = 0; i < this._tileMap.terrain.length; i++) {
+            for (let i = 0; i < this._tileMap.terrain[0].length; i++) {
                 ctx.moveTo(0, (i * TH) - 0.5);
-                ctx.lineTo(this._tileMap.terrain[0].length * TW, (i * TH) - 0.5);
+                ctx.lineTo(this._tileMap.terrain[0][0].length * TW, (i * TH) - 0.5);
             }
             ctx.stroke();
         }
