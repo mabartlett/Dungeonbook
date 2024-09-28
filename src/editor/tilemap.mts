@@ -6,8 +6,15 @@
 /** The name of the terrain type as listed in id.json. */
 export const TERRAIN_TYPE = "terrain";
 
+/** The default width (in tiles) of the main canvas. */
+export const DEFAULT_WIDTH = 16;
+
+/** The default height (in tiles) of the main canvas. */
+export const DEFAULT_HEIGHT = 16;
+
 /** Represents the array of tiles' numeric values, etc. */
 export class TileMap {
+
     /** Contains the numeric values associated with each terrain tile. */
     private _terrain: Array<Array<Array<number | null>>>;
 
@@ -22,25 +29,49 @@ export class TileMap {
 
     /** 
      * Constructs a TileMap object.
-     * @param theWidth - The number of tiles wide the TileMap is.
-     * @param theHeight - The number of tiles high the TileMap is.
+     * @param theOther - Another TileMap object. Note that it is not an instance
+     * of TileMap but rather is an instance of Object with the same fields as 
+     * TileMap.
      */
-    constructor(theWidth: number, theHeight: number) {
-        if (theHeight < 1 || theWidth < 1) {
-            throw new Error("TileMap constructor passed non-positive dimensions.");
-        } else if (!Number.isInteger(theHeight) || !Number.isInteger(theWidth)) {
-            throw new Error("TileMap constructor passed non-integer dimensions.");
-        } else {
+    constructor(theOther?: TileMap) {
+        if (theOther === undefined) {
+            // Make a TileMap one level deep of default height and width.
             this._terrain = new Array(1);
-            this._terrain[0] = new Array(theHeight);
+            this._terrain[0] = new Array(DEFAULT_HEIGHT);
             this._things = new Array(1);
-            this._things[0] = new Array(theHeight);
-            for (let i = 0; i < theHeight; i++) {
-                this._terrain[0][i] = new Array(theWidth).fill(null);
-                this._things[0][i] = new Array(theWidth).fill(null);
+            this._things[0] = new Array(DEFAULT_HEIGHT);
+            for (let i = 0; i < DEFAULT_HEIGHT; i++) {
+                this._terrain[0][i] = new Array(DEFAULT_WIDTH).fill(null);
+                this._things[0][i] = new Array(DEFAULT_WIDTH).fill(null);
             }
             this._startX = 0;
             this._startY = 0;
+        } else if (theOther.hasOwnProperty("_terrain") &&
+            theOther.hasOwnProperty("_startX") &&
+            theOther.hasOwnProperty("_startY") &&
+            theOther.hasOwnProperty("_things")) {
+            // Make a deep copy of the other TileMap.
+            this._startX = theOther._startX;
+            this._startY = theOther._startY;
+            let d = theOther._terrain.length;
+            this._terrain = new Array(d);
+            this._things = new Array(d);
+            let h = theOther._terrain[0].length;
+            let w = theOther._terrain[0][0].length;
+            for (let i = 0; i < d; i++) {
+                this._terrain[i] = new Array(h);
+                this._things[i] = new Array(h);
+                for (let j = 0; j < h; j++) {
+                    this._terrain[i][j] = new Array(w);
+                    this._things[i][j] = new Array(w);
+                    for (let k = 0; k < w; k++) {
+                        this._terrain[i][j][k] = theOther._terrain[i][j][k];
+                        this._things[i][j][k] = theOther._things[i][j][k];
+                    }
+                }
+            }
+        } else {
+            throw new Error("TileMap constructor passed non-TileMap type.");
         }
     }
     

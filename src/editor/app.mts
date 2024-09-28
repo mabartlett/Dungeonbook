@@ -3,7 +3,7 @@
  * @author Marcus Bartlett
  */
 
-import { TERRAIN_TYPE, TileMap } from "./tilemap.mjs";
+import { DEFAULT_WIDTH, DEFAULT_HEIGHT, TERRAIN_TYPE, TileMap } from "./tilemap.mjs";
 
 /** The pixel width of each tile. */
 export const TW = 16;
@@ -19,15 +19,6 @@ const GRID_COLOR = "#e0e0e0";
 
 /** The fill color of the flag representing the PC's start position. */
 const FLAG_COLOR = "#0000ff";
-
-/** The default width (in tiles) of the main canvas. */
-const DEFAULT_WIDTH = 16;
-
-/** The default height (in tiles) of the main canvas. */
-const DEFAULT_HEIGHT = 16;
-
-/** The default depth (in grids) of the level being edited. */
-const DEFAULT_DEPTH = 1;
 
 /** The CSS selector for the app's sidebar. */
 const SIDEBAR_SELECTOR = "#Sidebar";
@@ -101,6 +92,9 @@ export class App {
      */
     private _currDepth: number;
 
+    /** The path to the json file being read/written. */
+    private _filePath: string;
+
     /**
      * Constructs an App object. 
      * @param theTileset - An array representing all tiles.
@@ -111,9 +105,10 @@ export class App {
         } else {
             this._tileset = theTileset;
             this._selected = 0;
-            this._tileMap = new TileMap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            this._tileMap = new TileMap();
             this._currDepth = 0;
             this._tileTypes = new Array<string>(this._tileset.length);
+            this._filePath = "";
         }
     }
 
@@ -160,36 +155,44 @@ export class App {
         let html = document.querySelector("html") as HTMLElement;
         html.style.fontSize = `${TH * SCALING}px`;
         this.createTileCanvases();
-        this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_DEPTH);
+        this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT, 1);
         let output = document.querySelector(OUTPUT_SELECTOR) as HTMLTextAreaElement;
         output.value = this._tileMap.toString();
         let canvas = document.querySelector(CANVAS_SELECTOR) as HTMLCanvasElement;
-        let width = document.querySelector(WIDTH_SELECTOR) as HTMLInputElement;
-        let height = document.querySelector(HEIGHT_SELECTOR) as HTMLInputElement;
-        let tDepth = document.querySelector(TOT_DEPTH_SELECTOR) as HTMLInputElement;
-        let cDepth = document.querySelector(CURR_DEPTH_SELECTOR) as HTMLInputElement;
         canvas.addEventListener("mousemove", (theEvent: MouseEvent) => {
             this.mouseHandler(theEvent);
         });
         canvas.addEventListener("mousedown", (theEvent: MouseEvent) => {
             this.mouseHandler(theEvent);
         });
+        let width = document.querySelector(WIDTH_SELECTOR) as HTMLInputElement;
         width.value = String(DEFAULT_WIDTH);
         width.addEventListener("input", (theEvent: InputEvent) => {
             this.dimensionHandler(theEvent);
         });
+        let height = document.querySelector(HEIGHT_SELECTOR) as HTMLInputElement;
         height.value = String(DEFAULT_HEIGHT);
         height.addEventListener("input", (theEvent: InputEvent) => {
             this.dimensionHandler(theEvent);
         });
-        tDepth.value = String(DEFAULT_DEPTH);
+        let tDepth = document.querySelector(TOT_DEPTH_SELECTOR) as HTMLInputElement;
+        tDepth.value = String(1);
         tDepth.addEventListener("input", (theEvent: InputEvent) => {
             this.dimensionHandler(theEvent);
         });
-        cDepth.value = String(DEFAULT_DEPTH);
-        cDepth.max = String(DEFAULT_DEPTH);
+        let cDepth = document.querySelector(CURR_DEPTH_SELECTOR) as HTMLInputElement;
+        cDepth.value = String(1);
+        cDepth.max = String(1);
         cDepth.addEventListener("input", (theEvent: InputEvent) => {
             this.depthHandler(theEvent);
+        });
+        let saveAs = document.querySelector(SAVE_AS_SELECTOR) as HTMLElement;
+        saveAs.addEventListener("click", (theEvent: Event) => {
+            this.saveAsHandler(theEvent);
+        })
+        let load = document.querySelector(LOAD_SELECTOR) as HTMLElement;
+        load.addEventListener("input", (theEvent: Event) => {
+            this.loadHandler(theEvent);
         });
         this.setSidebarHeight();
         this.draw();
@@ -323,6 +326,57 @@ export class App {
             this.draw();
             let output = document.querySelector(OUTPUT_SELECTOR) as HTMLTextAreaElement;
             output.value = this._tileMap.toString();
+        }
+    }
+
+    /**
+     * Saves the file.
+     * @param theEvent - The Event that triggered the function call.
+     */
+    saveAsHandler(theEvent: Event) {
+        if (theEvent.target instanceof HTMLAnchorElement) {
+            let blob = new Blob([this._tileMap.toString()], 
+                {type: "text/json"});
+            let url = URL.createObjectURL(blob);
+            theEvent.target.href = url;
+        }
+    }
+
+    /**
+     * Loads a .json file, validates it, replaces the current TileMap object, 
+     * and then draws it.
+     * @param theEvent - The Event that triggered the function call.
+     */
+    loadHandler(theEvent: Event) {
+        if (theEvent.target instanceof HTMLInputElement && 
+            theEvent.target.files !== null) {
+            let file = theEvent.target.files[0];
+            file.text()
+                .then((theText) => {
+                    let ob = JSON.parse(theText);
+                    let tm = new TileMap(ob);
+                    this._tileMap = tm;
+                    this._currDepth = 0;
+                    let d = tm.terrain.length;
+                    (document.querySelector(CURR_DEPTH_SELECTOR) as HTMLInputElement)
+                        .value = String(d - 1);
+                    (document.querySelector(CURR_DEPTH_SELECTOR) as HTMLInputElement)
+                        .max = String(d - 1);
+                    (document.querySelector(TOT_DEPTH_SELECTOR) as HTMLInputElement)
+                        .value = String(d);
+                    let h = tm.terrain[0].length;
+                    (document.querySelector(HEIGHT_SELECTOR) as HTMLInputElement)
+                        .value = String(h);
+                    let w = tm.terrain[0][0].length;
+                    (document.querySelector(WIDTH_SELECTOR) as HTMLInputElement)
+                        .value = String(w);
+                    this.setCanvasDimensions(w, h, d);
+                    this.draw();
+                })
+                .catch((theError) => {
+                    console.error(theError);
+                    alert("An error occurred when reading the file.");
+                });
         }
     }
 

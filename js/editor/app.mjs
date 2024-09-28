@@ -7,15 +7,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { TERRAIN_TYPE, TileMap } from "./tilemap.mjs";
+import { DEFAULT_WIDTH, DEFAULT_HEIGHT, TERRAIN_TYPE, TileMap } from "./tilemap.mjs";
 export const TW = 16;
 export const TH = 16;
 const SCALING = 2;
 const GRID_COLOR = "#e0e0e0";
 const FLAG_COLOR = "#0000ff";
-const DEFAULT_WIDTH = 16;
-const DEFAULT_HEIGHT = 16;
-const DEFAULT_DEPTH = 1;
 const SIDEBAR_SELECTOR = "#Sidebar";
 const RADIO_NAME = "tiles";
 const TILE_LABEL_CLASS = "tile-label";
@@ -41,9 +38,10 @@ export class App {
         else {
             this._tileset = theTileset;
             this._selected = 0;
-            this._tileMap = new TileMap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            this._tileMap = new TileMap();
             this._currDepth = 0;
             this._tileTypes = new Array(this._tileset.length);
+            this._filePath = "";
         }
     }
     initializeTileTypes() {
@@ -87,36 +85,44 @@ export class App {
         let html = document.querySelector("html");
         html.style.fontSize = `${TH * SCALING}px`;
         this.createTileCanvases();
-        this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_DEPTH);
+        this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT, 1);
         let output = document.querySelector(OUTPUT_SELECTOR);
         output.value = this._tileMap.toString();
         let canvas = document.querySelector(CANVAS_SELECTOR);
-        let width = document.querySelector(WIDTH_SELECTOR);
-        let height = document.querySelector(HEIGHT_SELECTOR);
-        let tDepth = document.querySelector(TOT_DEPTH_SELECTOR);
-        let cDepth = document.querySelector(CURR_DEPTH_SELECTOR);
         canvas.addEventListener("mousemove", (theEvent) => {
             this.mouseHandler(theEvent);
         });
         canvas.addEventListener("mousedown", (theEvent) => {
             this.mouseHandler(theEvent);
         });
+        let width = document.querySelector(WIDTH_SELECTOR);
         width.value = String(DEFAULT_WIDTH);
         width.addEventListener("input", (theEvent) => {
             this.dimensionHandler(theEvent);
         });
+        let height = document.querySelector(HEIGHT_SELECTOR);
         height.value = String(DEFAULT_HEIGHT);
         height.addEventListener("input", (theEvent) => {
             this.dimensionHandler(theEvent);
         });
-        tDepth.value = String(DEFAULT_DEPTH);
+        let tDepth = document.querySelector(TOT_DEPTH_SELECTOR);
+        tDepth.value = String(1);
         tDepth.addEventListener("input", (theEvent) => {
             this.dimensionHandler(theEvent);
         });
-        cDepth.value = String(DEFAULT_DEPTH);
-        cDepth.max = String(DEFAULT_DEPTH);
+        let cDepth = document.querySelector(CURR_DEPTH_SELECTOR);
+        cDepth.value = String(1);
+        cDepth.max = String(1);
         cDepth.addEventListener("input", (theEvent) => {
             this.depthHandler(theEvent);
+        });
+        let saveAs = document.querySelector(SAVE_AS_SELECTOR);
+        saveAs.addEventListener("click", (theEvent) => {
+            this.saveAsHandler(theEvent);
+        });
+        let load = document.querySelector(LOAD_SELECTOR);
+        load.addEventListener("input", (theEvent) => {
+            this.loadHandler(theEvent);
         });
         this.setSidebarHeight();
         this.draw();
@@ -223,6 +229,45 @@ export class App {
             this.draw();
             let output = document.querySelector(OUTPUT_SELECTOR);
             output.value = this._tileMap.toString();
+        }
+    }
+    saveAsHandler(theEvent) {
+        if (theEvent.target instanceof HTMLAnchorElement) {
+            let blob = new Blob([this._tileMap.toString()], { type: "text/json" });
+            let url = URL.createObjectURL(blob);
+            theEvent.target.href = url;
+        }
+    }
+    loadHandler(theEvent) {
+        if (theEvent.target instanceof HTMLInputElement &&
+            theEvent.target.files !== null) {
+            let file = theEvent.target.files[0];
+            file.text()
+                .then((theText) => {
+                let ob = JSON.parse(theText);
+                let tm = new TileMap(ob);
+                this._tileMap = tm;
+                this._currDepth = 0;
+                let d = tm.terrain.length;
+                document.querySelector(CURR_DEPTH_SELECTOR)
+                    .value = String(d - 1);
+                document.querySelector(CURR_DEPTH_SELECTOR)
+                    .max = String(d - 1);
+                document.querySelector(TOT_DEPTH_SELECTOR)
+                    .value = String(d);
+                let h = tm.terrain[0].length;
+                document.querySelector(HEIGHT_SELECTOR)
+                    .value = String(h);
+                let w = tm.terrain[0][0].length;
+                document.querySelector(WIDTH_SELECTOR)
+                    .value = String(w);
+                this.setCanvasDimensions(w, h, d);
+                this.draw();
+            })
+                .catch((theError) => {
+                console.error(theError);
+                alert("An error occurred when reading the file.");
+            });
         }
     }
     depthHandler(theEvent) {

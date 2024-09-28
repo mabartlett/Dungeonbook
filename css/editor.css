@@ -3,6 +3,9 @@
     margin: 0;
     line-height: 1;
     font-size: 16px;
+    background-color: transparent;
+    text-decoration: none;
+    color: inherit;
 }
 
 html {
@@ -74,13 +77,24 @@ html {
 .menu-bar-button:hover,
 .menu-bar-label:hover {
     background-color: #f0f0f0;
+    cursor: default;
+}
+
+.dim-label {
+    width: 100%;
+    text-align: right;
+    padding-right: 4px;
+}
+
+.dim-input {
+    flex-grow: 1;
+    width: 100%;
 }
 
 #MenuBar {
     align-items: center;
 }
 
-#SaveAsInput,
 #LoadInput {
     display: none;
 }

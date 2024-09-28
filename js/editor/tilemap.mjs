@@ -1,23 +1,46 @@
 export const TERRAIN_TYPE = "terrain";
+export const DEFAULT_WIDTH = 16;
+export const DEFAULT_HEIGHT = 16;
 export class TileMap {
-    constructor(theWidth, theHeight) {
-        if (theHeight < 1 || theWidth < 1) {
-            throw new Error("TileMap constructor passed non-positive dimensions.");
-        }
-        else if (!Number.isInteger(theHeight) || !Number.isInteger(theWidth)) {
-            throw new Error("TileMap constructor passed non-integer dimensions.");
-        }
-        else {
+    constructor(theOther) {
+        if (theOther === undefined) {
             this._terrain = new Array(1);
-            this._terrain[0] = new Array(theHeight);
+            this._terrain[0] = new Array(DEFAULT_HEIGHT);
             this._things = new Array(1);
-            this._things[0] = new Array(theHeight);
-            for (let i = 0; i < theHeight; i++) {
-                this._terrain[0][i] = new Array(theWidth).fill(null);
-                this._things[0][i] = new Array(theWidth).fill(null);
+            this._things[0] = new Array(DEFAULT_HEIGHT);
+            for (let i = 0; i < DEFAULT_HEIGHT; i++) {
+                this._terrain[0][i] = new Array(DEFAULT_WIDTH).fill(null);
+                this._things[0][i] = new Array(DEFAULT_WIDTH).fill(null);
             }
             this._startX = 0;
             this._startY = 0;
+        }
+        else if (theOther.hasOwnProperty("_terrain") &&
+            theOther.hasOwnProperty("_startX") &&
+            theOther.hasOwnProperty("_startY") &&
+            theOther.hasOwnProperty("_things")) {
+            this._startX = theOther._startX;
+            this._startY = theOther._startY;
+            let d = theOther._terrain.length;
+            this._terrain = new Array(d);
+            this._things = new Array(d);
+            let h = theOther._terrain[0].length;
+            let w = theOther._terrain[0][0].length;
+            for (let i = 0; i < d; i++) {
+                this._terrain[i] = new Array(h);
+                this._things[i] = new Array(h);
+                for (let j = 0; j < h; j++) {
+                    this._terrain[i][j] = new Array(w);
+                    this._things[i][j] = new Array(w);
+                    for (let k = 0; k < w; k++) {
+                        this._terrain[i][j][k] = theOther._terrain[i][j][k];
+                        this._things[i][j][k] = theOther._things[i][j][k];
+                    }
+                }
+            }
+        }
+        else {
+            throw new Error("TileMap constructor passed non-TileMap type.");
         }
     }
     resize(theWidth, theHeight, theDepth) {

@@ -36,6 +36,9 @@ const SPRITES_PATH = path.sep + "img" + path.sep + "sheet_16.png";
 /** The relative path to the favicon. */
 const FAVICON_PATH = path.sep + "favicon.ico";
 
+/** The content type of the response to POST requests for downloading levels. */
+const DOWNLOAD_TYPE = "application/json";
+
 /** Drives the program. */
 function main() {
     let ws = new WebServer();
@@ -78,27 +81,48 @@ class WebServer {
                 } else if (ext === ".ico") {
                     type = "image/vnd.microsoft.icon";
                 }
-                theRes.setHeader("Content-Type", type);
-                theRes.writeHead(200);
-                let contents: Buffer | undefined;
-                if (this._readFiles.has(resource)) {
-                    contents = this._readFiles.get(resource);
+                if (theReq.method === "POST") {
+                    theRes.setHeader("Content-Disposition", 
+                        "attachment; filename='dungeon.json'");
+                    theRes.setHeader("Content-Type", DOWNLOAD_TYPE);
+                    let body: string;
+                    theReq.on("data", (chunk: any) => {
+                        body += String(chunk);
+                    });
+                    theReq.on("end", () => {
+                        theRes.setHeader("Content-Length", body.length);
+                        theRes.writeHead(200);
+                        theRes.write(body);
+                        theRes.end();
+                    });
+                    theReq.on("error", (theError) => {
+                        theRes.writeHead(500);
+                        theRes.end();
+                        console.error(theError);
+                    });
                 } else {
-                    // Read whatever is requested that was not read manually.
-                    // This shouldn't happen but is here as a safety valve.
-                    console.log(`${resource} requested. Reading...`);
-                    resource = resource.split("/").join(path.sep);
-                    await fs.readFile(process.cwd() + resource)
-                        .then((theContents) => {
-                            contents = theContents;
-                        })
-                        .catch((theError) => {
-                            console.error(theError);
-                            process.exit(1);
-                        });
-                    console.log("Done.");
+                    theRes.setHeader("Content-Type", type);
+                    theRes.writeHead(200);
+                    let contents: Buffer | undefined;
+                    if (this._readFiles.has(resource)) {
+                        contents = this._readFiles.get(resource);
+                    } else {
+                        // Read whatever is requested that was not read manually.
+                        // This shouldn't happen but is here as a safety valve.
+                        console.log(`${resource} requested. Reading...`);
+                        resource = resource.split("/").join(path.sep);
+                        await fs.readFile(process.cwd() + resource)
+                            .then((theContents) => {
+                                contents = theContents;
+                            })
+                            .catch((theError) => {
+                                console.error(theError);
+                                process.exit(1);
+                            });
+                        console.log("Done.");
+                    }
+                    theRes.end(contents);
                 }
-                theRes.end(contents);
             }
         });
         server.listen(PORT, "localhost", () => {
