@@ -18,7 +18,6 @@ const RADIO_NAME = "tiles";
 const TILE_LABEL_CLASS = "tile-label";
 const CANVAS_SELECTOR = "#MainCanvas";
 const DRAW_CLICK = 1;
-const OUTPUT_SELECTOR = "#Output";
 const WIDTH_SELECTOR = "#WidthInput";
 const HEIGHT_SELECTOR = "#HeightInput";
 const TOT_DEPTH_SELECTOR = "#TotDepthInput";
@@ -86,8 +85,6 @@ export class App {
         html.style.fontSize = `${TH * SCALING}px`;
         this.createTileCanvases();
         this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT, 1);
-        let output = document.querySelector(OUTPUT_SELECTOR);
-        output.value = this._tileMap.toString();
         let canvas = document.querySelector(CANVAS_SELECTOR);
         canvas.addEventListener("mousemove", (theEvent) => {
             this.mouseHandler(theEvent);
@@ -204,8 +201,6 @@ export class App {
                 this._tileMap.assignValue(this._selected, x, y, this._currDepth, t);
             }
             this.draw();
-            let output = document.querySelector(OUTPUT_SELECTOR);
-            output.value = this._tileMap.toString();
         }
     }
     dimensionHandler(theEvent) {
@@ -227,8 +222,6 @@ export class App {
             this._tileMap.resize(width, height, depth);
             this.setCanvasDimensions(width, height, depth);
             this.draw();
-            let output = document.querySelector(OUTPUT_SELECTOR);
-            output.value = this._tileMap.toString();
         }
     }
     saveAsHandler(theEvent) {
@@ -336,8 +329,7 @@ export class App {
     setSidebarHeight() {
         let row1 = document.querySelector(MENU_SELECTOR);
         let row2 = document.querySelector(DIM_SELECTOR);
-        let row3 = document.querySelector(OUTPUT_SELECTOR);
-        let h = row1.offsetHeight + row2.offsetHeight + row3.offsetHeight;
+        let h = row1.offsetHeight + row2.offsetHeight;
         let sidebar = document.querySelector(SIDEBAR_SELECTOR);
         sidebar.style.height = `calc(100vh - ${h}px)`;
     }

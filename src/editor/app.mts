@@ -35,9 +35,6 @@ const CANVAS_SELECTOR = "#MainCanvas";
 /** The number code corresponding to the mouse button for drawing. */
 const DRAW_CLICK = 1;
 
-/** The CSS selector for the output box. */
-const OUTPUT_SELECTOR = "#Output";
-
 /** The CSS selector for the width input field. */
 const WIDTH_SELECTOR = "#WidthInput";
 
@@ -156,8 +153,6 @@ export class App {
         html.style.fontSize = `${TH * SCALING}px`;
         this.createTileCanvases();
         this.setCanvasDimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT, 1);
-        let output = document.querySelector(OUTPUT_SELECTOR) as HTMLTextAreaElement;
-        output.value = this._tileMap.toString();
         let canvas = document.querySelector(CANVAS_SELECTOR) as HTMLCanvasElement;
         canvas.addEventListener("mousemove", (theEvent: MouseEvent) => {
             this.mouseHandler(theEvent);
@@ -295,8 +290,6 @@ export class App {
                 this._tileMap.assignValue(this._selected, x, y, this._currDepth, t);
             }
             this.draw();
-            let output = document.querySelector(OUTPUT_SELECTOR) as HTMLTextAreaElement;
-            output.value = this._tileMap.toString();
         }
     }
     
@@ -324,8 +317,6 @@ export class App {
             this._tileMap.resize(width, height, depth);
             this.setCanvasDimensions(width, height, depth);
             this.draw();
-            let output = document.querySelector(OUTPUT_SELECTOR) as HTMLTextAreaElement;
-            output.value = this._tileMap.toString();
         }
     }
 
@@ -457,8 +448,7 @@ export class App {
     setSidebarHeight() {
         let row1 = document.querySelector(MENU_SELECTOR) as HTMLDivElement;
         let row2 = document.querySelector(DIM_SELECTOR) as HTMLDivElement;
-        let row3 = document.querySelector(OUTPUT_SELECTOR) as HTMLDivElement;
-        let h = row1.offsetHeight + row2.offsetHeight + row3.offsetHeight;
+        let h = row1.offsetHeight + row2.offsetHeight;
         let sidebar = document.querySelector(SIDEBAR_SELECTOR) as HTMLElement;
         sidebar.style.height = `calc(100vh - ${h}px)`;
     }
