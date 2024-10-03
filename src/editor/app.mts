@@ -53,9 +53,6 @@ const DIM_SELECTOR = "#DimensionInputs";
 /** The CSS selector for the menu bar. */
 const MENU_SELECTOR = "#MenuBar";
 
-/** The CSS selector for the element displaying the current file name. */
-const FILENAME_SELECTOR = "#FileName";
-
 /** The CSS selector for the load input. */
 const LOAD_SELECTOR = "#LoadInput";
 
@@ -89,9 +86,6 @@ export class App {
      */
     private _currDepth: number;
 
-    /** The path to the json file being read/written. */
-    private _filePath: string;
-
     /**
      * Constructs an App object. 
      * @param theTileset - An array representing all tiles.
@@ -105,7 +99,6 @@ export class App {
             this._tileMap = new TileMap();
             this._currDepth = 0;
             this._tileTypes = new Array<string>(this._tileset.length);
-            this._filePath = "";
         }
     }
 
@@ -451,10 +444,5 @@ export class App {
         let h = row1.offsetHeight + row2.offsetHeight;
         let sidebar = document.querySelector(SIDEBAR_SELECTOR) as HTMLElement;
         sidebar.style.height = `calc(100vh - ${h}px)`;
-    }
-
-    /** Writes the name of the file to the view. */
-    writeFileName() {
-
     }
 }

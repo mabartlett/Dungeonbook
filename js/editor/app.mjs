@@ -24,7 +24,6 @@ const TOT_DEPTH_SELECTOR = "#TotDepthInput";
 const CURR_DEPTH_SELECTOR = "#CurrDepthInput";
 const DIM_SELECTOR = "#DimensionInputs";
 const MENU_SELECTOR = "#MenuBar";
-const FILENAME_SELECTOR = "#FileName";
 const LOAD_SELECTOR = "#LoadInput";
 const SAVE_AS_SELECTOR = "#SaveAsInput";
 const ID_JSON_PATH = "./../../id.json";
@@ -40,7 +39,6 @@ export class App {
             this._tileMap = new TileMap();
             this._currDepth = 0;
             this._tileTypes = new Array(this._tileset.length);
-            this._filePath = "";
         }
     }
     initializeTileTypes() {
@@ -332,7 +330,5 @@ export class App {
         let h = row1.offsetHeight + row2.offsetHeight;
         let sidebar = document.querySelector(SIDEBAR_SELECTOR);
         sidebar.style.height = `calc(100vh - ${h}px)`;
-    }
-    writeFileName() {
     }
 }
