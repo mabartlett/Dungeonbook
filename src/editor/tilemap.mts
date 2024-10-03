@@ -147,7 +147,10 @@ export class TileMap {
         } else if (theZ < 0 || theZ >= this._terrain.length) {
             console.warn(`TileMap.assignValue passed invalid z value: ${theZ}.`);
         } else {
-            if (theType === TERRAIN_TYPE) {
+            if (theValue === null) {
+                this._terrain[theZ][theY][theX] = null;
+                this._things[theZ][theY][theX] = null;
+            } else if (theType === TERRAIN_TYPE) {
                 this._terrain[theZ][theY][theX] = theValue;
             } else {
                 this._things[theZ][theY][theX] = theValue;

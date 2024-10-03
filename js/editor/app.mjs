@@ -18,6 +18,7 @@ const RADIO_NAME = "tiles";
 const TILE_LABEL_CLASS = "tile-label";
 const CANVAS_SELECTOR = "#MainCanvas";
 const DRAW_CLICK = 1;
+const ERASE_CLICK = 2;
 const WIDTH_SELECTOR = "#WidthInput";
 const HEIGHT_SELECTOR = "#HeightInput";
 const TOT_DEPTH_SELECTOR = "#TotDepthInput";
@@ -89,6 +90,9 @@ export class App {
         });
         canvas.addEventListener("mousedown", (theEvent) => {
             this.mouseHandler(theEvent);
+        });
+        canvas.addEventListener("contextmenu", (theEvent) => {
+            theEvent.preventDefault();
         });
         let width = document.querySelector(WIDTH_SELECTOR);
         width.value = String(DEFAULT_WIDTH);
@@ -185,17 +189,19 @@ export class App {
         }
     }
     mouseHandler(theEvent) {
-        if (theEvent.buttons === DRAW_CLICK && this._tileTypes !== undefined) {
+        if ((theEvent.buttons === DRAW_CLICK || theEvent.buttons === ERASE_CLICK) &&
+            this._tileTypes !== undefined) {
+            theEvent.preventDefault();
             let x = Math.min(Math.floor(theEvent.offsetX / (TW * SCALING)), this._tileMap.terrain[0][0].length - 1);
             let y = Math.min(Math.floor(theEvent.offsetY / (TH * SCALING)), this._tileMap.terrain[0].length - 1);
             let t = this._tileTypes[this._selected];
-            if (theEvent.shiftKey) {
+            if (theEvent.buttons === ERASE_CLICK) {
                 this._tileMap.assignValue(null, x, y, this._currDepth, t);
             }
             else if (theEvent.ctrlKey && this._currDepth === 0) {
                 this._tileMap.assignStart(x, y);
             }
-            else if (!theEvent.ctrlKey) {
+            else if (theEvent.buttons === DRAW_CLICK && !theEvent.ctrlKey) {
                 this._tileMap.assignValue(this._selected, x, y, this._currDepth, t);
             }
             this.draw();
