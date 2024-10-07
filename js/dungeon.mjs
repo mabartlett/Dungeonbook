@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Dungeon = void 0;
-class Dungeon {
+export class Dungeon {
     constructor(theDungeon) {
         if (theDungeon === undefined) {
         }
@@ -10,4 +7,3 @@ class Dungeon {
         }
     }
 }
-exports.Dungeon = Dungeon;

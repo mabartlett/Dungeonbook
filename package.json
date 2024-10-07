@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "jasmine-browser-runner": "^2.5.0",
+    "jasmine-core": "^5.3.0"
+  },
+  "scripts": {
+    "test": "jasmine-browser-runner runSpecs"
+  }
+}

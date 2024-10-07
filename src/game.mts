@@ -3,8 +3,8 @@
  * @author Marcus Bartlett
  */
 
-import { Dungeon } from "./dungeon.js";
-import { Screen } from "./screen.js";
+import { Dungeon } from "./dungeon.mjs";
+import { Screen } from "./screen.mjs";
 
 
 /** The Game object is the root object of the world object heirarchy */

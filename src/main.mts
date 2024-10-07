@@ -3,7 +3,7 @@
  * @author Marcus Bartlett
  */
 
-import { Game } from "./game.js";
+import { Game } from "./game.mjs";
 
 /** The pixel width of each tile. */
 const TW = 16;

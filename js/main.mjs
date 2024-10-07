@@ -1,6 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const game_js_1 = require("./game.js");
+import { Game } from "./game.mjs";
 const TW = 16;
 const TH = 16;
 const IMAGE_SOURCE = "./img/sheet_16.png";
@@ -15,7 +13,7 @@ function main() {
             }
         }
         Promise.all(arr).then((sprites) => {
-            let game = new game_js_1.Game(sprites);
+            let game = new Game(sprites);
             game.start();
         }).catch((error) => {
             console.log(error);
