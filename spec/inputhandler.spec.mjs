@@ -1,4 +1,4 @@
-import { CS_KEYS, ARROW_KEYS, InputHandler } from "../js/InputHandler.mjs";
+import { InputHandler } from "../js/InputHandler.mjs";
 
 describe("This suite tests that InputHandler's", function() {
     let ih = InputHandler.getInstance();
