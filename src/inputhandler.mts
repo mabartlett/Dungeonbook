@@ -3,11 +3,14 @@
  * @author Marcus Bartlett
  */
 
-/** The codes corresponding to the context sensitive buttons. */
+/** 
+ * The codes corresponding to the context sensitive buttons.
+ * The order is critical!
+ * */
 const CS_KEYS = ["KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD"];
 
 /** The codes corresponding to the arrow keys. */
-const ARROW_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+export const ARROW_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
 
 /** Handles input. This is a singleton and is accessed by many objects. */
 export class InputHandler {

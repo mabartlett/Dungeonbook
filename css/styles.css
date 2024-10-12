@@ -4,3 +4,9 @@
     line-height: 1;
     box-sizing: border-box;
 }
+
+#ScreenCanvas {
+    margin: auto;
+    display: block;
+    background-color: #000000;
+}

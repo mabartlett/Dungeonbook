@@ -1,8 +1,14 @@
-import { Game } from "./game.mjs";
+import { Game, SCREEN_HEIGHT, SCREEN_WIDTH } from "./game.mjs";
 const TW = 16;
 const TH = 16;
 const IMAGE_SOURCE = "./img/sheet_16.png";
+const SCREEN_SELECTOR = "#ScreenCanvas";
 function main() {
+    const canvas = document.querySelector(SCREEN_SELECTOR);
+    canvas.height = SCREEN_HEIGHT;
+    canvas.width = SCREEN_WIDTH;
+    canvas.style.height = `${SCREEN_HEIGHT}px`;
+    canvas.style.width = `${SCREEN_WIDTH}px`;
     let img = new Image();
     img.src = IMAGE_SOURCE;
     img.addEventListener("load", () => {
@@ -13,8 +19,14 @@ function main() {
             }
         }
         Promise.all(arr).then((sprites) => {
-            let game = new Game(sprites);
-            game.start();
+            const ctx = canvas.getContext("2d");
+            if (ctx instanceof CanvasRenderingContext2D) {
+                let game = new Game(sprites, ctx);
+                game.start();
+            }
+            else {
+                throw new Error("Could not get canvas rendering context.");
+            }
         }).catch((error) => {
             console.log(error);
         });
