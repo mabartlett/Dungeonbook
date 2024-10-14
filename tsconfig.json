@@ -5,7 +5,10 @@
         "esModuleInterop": true,
         "outDir": "js",
         "strictNullChecks": true,
-        "target": "ES6"
+        "target": "ES6",
+        "types": [
+            "@vitest/browser/providers/playwright"
+        ]
     },
     "include": ["src/**/*"],
 }
