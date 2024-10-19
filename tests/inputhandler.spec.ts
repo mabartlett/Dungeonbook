@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vitest";
+import { expect, test } from "@playwright/test";
 import { InputHandler } from "../src/inputhandler.mjs";
 
-describe("InputHandler's", () => {
+test.describe("InputHandler's", () => {
     const ih = InputHandler.getInstance();
 
     test("getInstance function returns one and the same instance.", () => {
