@@ -43,24 +43,26 @@ export class Game {
     }
 
     /**
-     * Takes a path to an image and returns an ImageBitmap representing it.
+     * Takes a path to an image and returns a Promise that resolves to an 
+     * ImageBitmap of that image.
      * @param thePath - The path to the image.
-     * @return 
+     * @return A Promise resolving to an ImageBitmap for the specified image. If
+     * the specified path is invalid, the returned value is a Promise resolving 
+     * to a "blank" ImageBitmap. This is to avoid crashing the game.
      */
-    async loadImageBitmap(thePath: string) {
+    async loadImageBitmap(thePath: string): Promise<ImageBitmap>  {
         const img = new Image();
         img.src = thePath;
-        const prom = new Promise((resolveFunc, rejectFunc) => {
+        return new Promise<ImageBitmap>((resolve, reject) => {
             img.addEventListener("load", () => {
                 createImageBitmap(img)
-                    .then((theImgBit) => {resolveFunc(theImgBit)})
-                    .catch((theError) => {rejectFunc(theError)});
+                    .then((theIB) => {resolve(theIB)})
+                    .catch((theError) => {reject(theError)});
             });
             img.addEventListener("error", () => {
-                rejectFunc(new Error("Could not load image!"));
+                reject(new Error(`Could not load image from ${thePath}.`));
             });
         });
-        return prom;
     }
 
     /** Draws everything to the screen. */

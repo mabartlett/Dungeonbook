@@ -1,3 +1,8 @@
+/**
+ * @file Tests the InputHandler class.
+ * @author Marcus Bartlett
+ */
+
 import { expect, test } from "@playwright/test";
 import { InputHandler } from "../src/inputhandler.mjs";
 

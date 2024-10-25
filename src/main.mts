@@ -5,6 +5,7 @@
  */
 
 import { Game, SCREEN_HEIGHT, SCREEN_WIDTH } from "./game.mjs";
+import { test as testGame } from "./module-tests/testGame.mjs";
 
 /** The pixel width of each tile. */
 const TW = 16;
@@ -17,6 +18,9 @@ const IMAGE_SOURCE = "./img/sheet_16.png";
 
 /** The CSS selector for the Canvas element onto which the game is drawn. */
 const SCREEN_SELECTOR = "#ScreenCanvas";
+
+/** Whether the application is in development and module tests should be run. */
+const TESTING = true;
 
 /** 
  * Drives the program by setting up the webpage then creating a Game object and 
@@ -39,7 +43,7 @@ function main() {
                 arr.push(createImageBitmap(img, j * TW, i * TH, TW, TH));
             }
         }
-        Promise.all(arr).then((sprites) => {
+        Promise.all(arr).then(async (sprites) => {
             const ctx = canvas.getContext("2d");
             if (ctx instanceof CanvasRenderingContext2D) {
                 let game = new Game(sprites, ctx);
@@ -51,6 +55,14 @@ function main() {
             console.log(error);
         });
     });
+    if (TESTING) {
+        tests();
+    }
+}
+
+/** Performs the tests that Playwright just can't do. */
+function tests() {
+    testGame();
 }
 
 main();

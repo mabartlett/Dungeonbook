@@ -20,17 +20,16 @@ export class Game {
         return __awaiter(this, void 0, void 0, function* () {
             const img = new Image();
             img.src = thePath;
-            const prom = new Promise((resolveFunc, rejectFunc) => {
+            return new Promise((resolve, reject) => {
                 img.addEventListener("load", () => {
                     createImageBitmap(img)
-                        .then((theImgBit) => { resolveFunc(theImgBit); })
-                        .catch((theError) => { rejectFunc(theError); });
+                        .then((theIB) => { resolve(theIB); })
+                        .catch((theError) => { reject(theError); });
                 });
                 img.addEventListener("error", () => {
-                    rejectFunc(new Error("Could not load image!"));
+                    reject(new Error(`Could not load image from ${thePath}.`));
                 });
             });
-            return prom;
         });
     }
     draw() {
