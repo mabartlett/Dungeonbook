@@ -46,10 +46,7 @@ export class TileMap {
             }
             this._startX = 0;
             this._startY = 0;
-        } else if (theOther.hasOwnProperty("_terrain") &&
-            theOther.hasOwnProperty("_startX") &&
-            theOther.hasOwnProperty("_startY") &&
-            theOther.hasOwnProperty("_things")) {
+        } else if (theOther instanceof TileMap || this.resemblesTileMap(theOther)) {
             // Make a deep copy of the other TileMap.
             this._startX = theOther._startX;
             this._startY = theOther._startY;
@@ -73,6 +70,18 @@ export class TileMap {
         } else {
             throw new Error("TileMap constructor passed non-TileMap type.");
         }
+    }
+
+    /**
+     * Determines whether another object has the same fields as a TileMap.
+     * @param theOther - The suspected TileMap object.
+     * @returns - Whether the other object has the same fields as a TileMap.
+     */
+    resemblesTileMap(theOther: object): boolean {
+        return (theOther.hasOwnProperty("_terrain") &&
+        theOther.hasOwnProperty("_startX") &&
+        theOther.hasOwnProperty("_startY") &&
+        theOther.hasOwnProperty("_things"))
     }
     
     /**
@@ -120,13 +129,20 @@ export class TileMap {
                     }
                 }
             }
-            // Readjust start coordinates.
-            if (this._startX >= this._terrain[0][0].length) {
-                this._startX = this._terrain[0][0].length - 1;
-            }
-            if (this._startY >= this._terrain[0].length) {
-                this._startY = this._terrain[0].length - 1;
-            }
+            this.readjustStartCoordinates();
+        }
+    }
+
+    /** 
+     * If the start coordinates lie outside the TileMap boundaries, this 
+     * function sets the coordinates to the maximum valid value.
+     * */
+    readjustStartCoordinates() {
+        if (this._startX >= this._terrain[0][0].length) {
+            this._startX = this._terrain[0][0].length - 1;
+        }
+        if (this._startY >= this._terrain[0].length) {
+            this._startY = this._terrain[0].length - 1;
         }
     }
     

@@ -15,10 +15,7 @@ export class TileMap {
             this._startX = 0;
             this._startY = 0;
         }
-        else if (theOther.hasOwnProperty("_terrain") &&
-            theOther.hasOwnProperty("_startX") &&
-            theOther.hasOwnProperty("_startY") &&
-            theOther.hasOwnProperty("_things")) {
+        else if (theOther instanceof TileMap || this.resemblesTileMap(theOther)) {
             this._startX = theOther._startX;
             this._startY = theOther._startY;
             let d = theOther._terrain.length;
@@ -42,6 +39,12 @@ export class TileMap {
         else {
             throw new Error("TileMap constructor passed non-TileMap type.");
         }
+    }
+    resemblesTileMap(theOther) {
+        return (theOther.hasOwnProperty("_terrain") &&
+            theOther.hasOwnProperty("_startX") &&
+            theOther.hasOwnProperty("_startY") &&
+            theOther.hasOwnProperty("_things"));
     }
     resize(theWidth, theHeight, theDepth) {
         if (theHeight < 1 || theWidth < 1 || theDepth < 1) {
@@ -82,12 +85,15 @@ export class TileMap {
                     }
                 }
             }
-            if (this._startX >= this._terrain[0][0].length) {
-                this._startX = this._terrain[0][0].length - 1;
-            }
-            if (this._startY >= this._terrain[0].length) {
-                this._startY = this._terrain[0].length - 1;
-            }
+            this.readjustStartCoordinates();
+        }
+    }
+    readjustStartCoordinates() {
+        if (this._startX >= this._terrain[0][0].length) {
+            this._startX = this._terrain[0][0].length - 1;
+        }
+        if (this._startY >= this._terrain[0].length) {
+            this._startY = this._terrain[0].length - 1;
         }
     }
     assignValue(theValue, theX, theY, theZ, theType) {
