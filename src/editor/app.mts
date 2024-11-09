@@ -5,6 +5,8 @@
 
 import { DEFAULT_WIDTH, DEFAULT_HEIGHT, TERRAIN_TYPE, TileMap } from "./tilemap.mjs";
 
+//#region Constants
+
 /** The pixel width of each tile. */
 export const TW = 16;
 
@@ -12,7 +14,16 @@ export const TW = 16;
 export const TH = 16;
 
 /** The degree of scaling when scaling is enabled. */
-const SCALING = 2;
+export const SCALING = 2;
+
+/** The CSS class for the tile canvases in the side bar. */
+export const TILE_CANVAS_CLASS = "tile";
+
+/** The number code corresponding to the mouse button for drawing. */
+export const DRAW_CLICK = 1;
+
+/** The number code corresponding to the mouse button for erasing. */
+export const ERASE_CLICK = 2;
 
 /** The color of the grid lines. */
 const GRID_COLOR = "#e0e0e0";
@@ -31,12 +42,6 @@ const TILE_LABEL_CLASS = "tile-label";
 
 /** The CSS selector for the main canvas. */
 const CANVAS_SELECTOR = "#MainCanvas";
-
-/** The number code corresponding to the mouse button for drawing. */
-const DRAW_CLICK = 1;
-
-/** The number code corresponding to the mouse button for erasing. */
-const ERASE_CLICK = 2;
 
 /** The CSS selector for the width input field. */
 const WIDTH_SELECTOR = "#WidthInput";
@@ -68,8 +73,17 @@ const ID_JSON_PATH = "./../../id.json";
 /** The character used to draw the PC's starting position. */
 const START_CHAR = "⚑";
 
+/** The minimum allowed value for the height and width. */
+const DIM_MIN = 2;
+
+/** The maximum allowed value for the height and width. */
+const DIM_MAX = 256;
+
+//#endregion
+
 /** The "model" portion of the program with some domain violations tossed in. */
 export class App {
+    //#region Fields, Constructor
     /** The array representing the individual tiles. */
     private _tileset: Array<ImageBitmap>;
 
@@ -104,6 +118,9 @@ export class App {
             this._tileTypes = new Array<string>(this._tileset.length);
         }
     }
+
+    //#endregion
+    //#region Instance Methods
 
     /** Initializes the _tileTypes field. */
     async initializeTileTypes() {
@@ -159,16 +176,8 @@ export class App {
         canvas.addEventListener("contextmenu", (theEvent: MouseEvent) => {
             theEvent.preventDefault();
         });
-        let width = document.querySelector(WIDTH_SELECTOR) as HTMLInputElement;
-        width.value = String(DEFAULT_WIDTH);
-        width.addEventListener("input", (theEvent: InputEvent) => {
-            this.dimensionHandler(theEvent);
-        });
-        let height = document.querySelector(HEIGHT_SELECTOR) as HTMLInputElement;
-        height.value = String(DEFAULT_HEIGHT);
-        height.addEventListener("input", (theEvent: InputEvent) => {
-            this.dimensionHandler(theEvent);
-        });
+        this.initDimInputElement(WIDTH_SELECTOR, DEFAULT_WIDTH);
+        this.initDimInputElement(HEIGHT_SELECTOR, DEFAULT_HEIGHT);
         let tDepth = document.querySelector(TOT_DEPTH_SELECTOR) as HTMLInputElement;
         tDepth.value = String(1);
         tDepth.addEventListener("input", (theEvent: InputEvent) => {
@@ -186,10 +195,26 @@ export class App {
         })
         let load = document.querySelector(LOAD_SELECTOR) as HTMLElement;
         load.addEventListener("input", (theEvent: Event) => {
-            this.loadHandler(theEvent);
+            this.uploadHandler(theEvent);
         });
         this.setSidebarHeight();
         this.draw();
+    }
+
+    /**
+     * Initializes a dimension input element with a default value as well as min
+     * and max values.
+     * @param theSelector - The CSS selector used to locate the input element.
+     * @param theDefault - The default value the element is initialized with.
+     */
+    initDimInputElement(theSelector: string, theDefault: number) {
+        const element = document.querySelector(theSelector) as HTMLInputElement;
+        element.value = String(theDefault);
+        element.addEventListener("input", (theEvent: InputEvent) => {
+            this.dimensionHandler(theEvent);
+        });
+        element.setAttribute("min", String(DIM_MIN));
+        element.setAttribute("max", String(DIM_MAX));
     }
     
     /**
@@ -213,7 +238,7 @@ export class App {
             });
             label.append(radButt);
             let canvas = document.createElement("canvas");
-            canvas.className = "tile";
+            canvas.className = TILE_CANVAS_CLASS;
             canvas.height = TH * SCALING;
             canvas.width = TW * SCALING;
             label.append(canvas);
@@ -307,8 +332,7 @@ export class App {
         let height = Number.parseInt(heightEl.value);
         let depth = Number.parseInt(depthEl.value);
         if (!Number.isNaN(width) && !Number.isNaN(height) && !Number.isNaN(depth) &&
-            width >= parseInt(widthEl.min) && height >= parseInt(heightEl.min) &&
-            depth >= parseInt(depthEl.min)) {
+            width >= DIM_MIN && height >= DIM_MIN && depth >= 1) {
             // Remember that the depth is zero-indexed!
             if (this._currDepth >= depth) {
                 this._currDepth = depth - 1;
@@ -331,6 +355,10 @@ export class App {
                 {type: "text/json"});
             let url = URL.createObjectURL(blob);
             theEvent.target.href = url;
+            // I know, I know. I didn't really have a choice here.
+            window.setTimeout(() => {
+                URL.revokeObjectURL(url);
+            }, 5000)
         }
     }
 
@@ -339,7 +367,7 @@ export class App {
      * and then draws it.
      * @param theEvent - The Event that triggered the function call.
      */
-    loadHandler(theEvent: Event) {
+    uploadHandler(theEvent: Event) {
         if (theEvent.target instanceof HTMLInputElement && 
             theEvent.target.files !== null) {
             let file = theEvent.target.files[0];

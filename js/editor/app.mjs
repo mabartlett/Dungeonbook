@@ -10,15 +10,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { DEFAULT_WIDTH, DEFAULT_HEIGHT, TERRAIN_TYPE, TileMap } from "./tilemap.mjs";
 export const TW = 16;
 export const TH = 16;
-const SCALING = 2;
+export const SCALING = 2;
+export const TILE_CANVAS_CLASS = "tile";
+export const DRAW_CLICK = 1;
+export const ERASE_CLICK = 2;
 const GRID_COLOR = "#e0e0e0";
 const FLAG_COLOR = "#0000ff";
 const SIDEBAR_SELECTOR = "#Sidebar";
 const RADIO_NAME = "tiles";
 const TILE_LABEL_CLASS = "tile-label";
 const CANVAS_SELECTOR = "#MainCanvas";
-const DRAW_CLICK = 1;
-const ERASE_CLICK = 2;
 const WIDTH_SELECTOR = "#WidthInput";
 const HEIGHT_SELECTOR = "#HeightInput";
 const TOT_DEPTH_SELECTOR = "#TotDepthInput";
@@ -29,6 +30,8 @@ const LOAD_SELECTOR = "#LoadInput";
 const SAVE_AS_SELECTOR = "#SaveAsInput";
 const ID_JSON_PATH = "./../../id.json";
 const START_CHAR = "⚑";
+const DIM_MIN = 2;
+const DIM_MAX = 256;
 export class App {
     constructor(theTileset) {
         if (theTileset.length == 0) {
@@ -94,16 +97,8 @@ export class App {
         canvas.addEventListener("contextmenu", (theEvent) => {
             theEvent.preventDefault();
         });
-        let width = document.querySelector(WIDTH_SELECTOR);
-        width.value = String(DEFAULT_WIDTH);
-        width.addEventListener("input", (theEvent) => {
-            this.dimensionHandler(theEvent);
-        });
-        let height = document.querySelector(HEIGHT_SELECTOR);
-        height.value = String(DEFAULT_HEIGHT);
-        height.addEventListener("input", (theEvent) => {
-            this.dimensionHandler(theEvent);
-        });
+        this.initDimInputElement(WIDTH_SELECTOR, DEFAULT_WIDTH);
+        this.initDimInputElement(HEIGHT_SELECTOR, DEFAULT_HEIGHT);
         let tDepth = document.querySelector(TOT_DEPTH_SELECTOR);
         tDepth.value = String(1);
         tDepth.addEventListener("input", (theEvent) => {
@@ -121,10 +116,19 @@ export class App {
         });
         let load = document.querySelector(LOAD_SELECTOR);
         load.addEventListener("input", (theEvent) => {
-            this.loadHandler(theEvent);
+            this.uploadHandler(theEvent);
         });
         this.setSidebarHeight();
         this.draw();
+    }
+    initDimInputElement(theSelector, theDefault) {
+        const element = document.querySelector(theSelector);
+        element.value = String(theDefault);
+        element.addEventListener("input", (theEvent) => {
+            this.dimensionHandler(theEvent);
+        });
+        element.setAttribute("min", String(DIM_MIN));
+        element.setAttribute("max", String(DIM_MAX));
     }
     createTileCanvases() {
         let flag = true;
@@ -143,7 +147,7 @@ export class App {
             });
             label.append(radButt);
             let canvas = document.createElement("canvas");
-            canvas.className = "tile";
+            canvas.className = TILE_CANVAS_CLASS;
             canvas.height = TH * SCALING;
             canvas.width = TW * SCALING;
             label.append(canvas);
@@ -216,8 +220,7 @@ export class App {
         let height = Number.parseInt(heightEl.value);
         let depth = Number.parseInt(depthEl.value);
         if (!Number.isNaN(width) && !Number.isNaN(height) && !Number.isNaN(depth) &&
-            width >= parseInt(widthEl.min) && height >= parseInt(heightEl.min) &&
-            depth >= parseInt(depthEl.min)) {
+            width >= DIM_MIN && height >= DIM_MIN && depth >= 1) {
             if (this._currDepth >= depth) {
                 this._currDepth = depth - 1;
                 cdepthEl.value = String(depth);
@@ -233,9 +236,12 @@ export class App {
             let blob = new Blob([this._tileMap.toString()], { type: "text/json" });
             let url = URL.createObjectURL(blob);
             theEvent.target.href = url;
+            window.setTimeout(() => {
+                URL.revokeObjectURL(url);
+            }, 5000);
         }
     }
-    loadHandler(theEvent) {
+    uploadHandler(theEvent) {
         if (theEvent.target instanceof HTMLInputElement &&
             theEvent.target.files !== null) {
             let file = theEvent.target.files[0];
