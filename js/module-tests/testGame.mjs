@@ -37,9 +37,7 @@ export function test() {
         else {
             console.error("loadImageBitmap does not produce ImageBitmap.");
         }
-        const ibm2 = yield mockGame.loadImageBitmap("FAKEPATH.png")
-            .catch((theError) => {
-            console.log(`Caught ${theError}`);
-        });
+        yield mockGame.loadImageBitmap("FAKEPATH.png")
+            .catch((theError) => { console.log(`Caught ${theError}`); });
     });
 }
