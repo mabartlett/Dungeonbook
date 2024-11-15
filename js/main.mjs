@@ -9,41 +9,50 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { Game, SCREEN_HEIGHT, SCREEN_WIDTH } from "./game.mjs";
 import { test as testGame } from "./module-tests/testGame.mjs";
-const TW = 16;
-const TH = 16;
-const IMAGE_SOURCE = "./img/sheet_16.png";
 const SCREEN_SELECTOR = "#ScreenCanvas";
-const TESTING = true;
+const TESTING = false;
 function main() {
     const canvas = document.querySelector(SCREEN_SELECTOR);
     canvas.height = SCREEN_HEIGHT;
     canvas.width = SCREEN_WIDTH;
     canvas.style.height = `${SCREEN_HEIGHT}px`;
     canvas.style.width = `${SCREEN_WIDTH}px`;
-    let img = new Image();
-    img.src = IMAGE_SOURCE;
-    img.addEventListener("load", () => {
-        let arr = new Array();
-        for (let i = 0; i * TH < img.naturalHeight; i++) {
-            for (let j = 0; j * TW < img.naturalWidth; j++) {
-                arr.push(createImageBitmap(img, j * TW, i * TH, TW, TH));
-            }
-        }
-        Promise.all(arr).then((sprites) => __awaiter(this, void 0, void 0, function* () {
-            const ctx = canvas.getContext("2d");
-            if (ctx instanceof CanvasRenderingContext2D) {
-                let game = new Game(sprites, ctx);
-                game.start();
-            }
-            else {
-                throw new Error("Could not get canvas rendering context.");
-            }
-        })).catch((error) => {
-            console.log(error);
-        });
+    startGame(canvas);
+    window.addEventListener("resize", (theEvent) => {
+        const width = theEvent.target.innerWidth;
+        const height = theEvent.target.innerHeight;
+        resizeCanvas(canvas, width, height);
     });
+    resizeCanvas(canvas, window.innerWidth, window.innerHeight);
     if (TESTING) {
         tests();
+    }
+}
+function startGame(theCanvas) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const ctx = theCanvas.getContext("2d");
+        if (ctx instanceof CanvasRenderingContext2D) {
+            const game = new Game(ctx);
+            yield game.start();
+        }
+        else {
+            console.error("Could not get canvas rendering context.");
+            alert("Could not start game. Try refreshing.");
+        }
+    });
+}
+function resizeCanvas(theCanvas, theWidth, theHeight) {
+    let widerThanAspRat = theHeight / theWidth < SCREEN_HEIGHT / SCREEN_WIDTH;
+    let ratio;
+    if (widerThanAspRat) {
+        ratio = theHeight / SCREEN_HEIGHT;
+        theCanvas.style.width = `${theCanvas.width * ratio}px`;
+        theCanvas.style.height = `${theHeight}px`;
+    }
+    else {
+        ratio = theWidth / SCREEN_WIDTH;
+        theCanvas.style.height = `${theCanvas.height * ratio}px`;
+        theCanvas.style.width = `${theWidth}px`;
     }
 }
 function tests() {

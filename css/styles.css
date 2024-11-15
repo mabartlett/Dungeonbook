@@ -5,8 +5,16 @@
     box-sizing: border-box;
 }
 
+body {
+    background-color: #000000;
+    display: flex;
+    align-items: center;
+    min-height: 100vh;
+}
+
 #ScreenCanvas {
     margin: auto;
     display: block;
     background-color: #000000;
+    image-rendering: pixelated;
 }

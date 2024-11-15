@@ -28,7 +28,7 @@ export async function test() {
     if (ctx === null) {
         throw new Error("Could not create CanvasRenderingContext2D.");
     }
-    const mockGame = new Game([ibm], ctx);
+    const mockGame = new Game(ctx);
     if (await mockGame.loadImageBitmap(IMAGE_SOURCE) instanceof ImageBitmap) {
         console.log("loadImapgeBitmap produces ImageBitmap.");
     } else {
