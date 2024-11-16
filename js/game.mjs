@@ -7,14 +7,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { TextBox, CW, CH } from "./textbox.mjs";
 export const SCREEN_HEIGHT = 288;
 export const SCREEN_WIDTH = 512;
 const BORDER_PATH = "./img/border.png";
 const TITLE_PATH = "./img/title.png";
 const SHEET_PATH = "./img/sheet_16.png";
+const FONT_PATH = "./img/font_6x8.png";
 const TW = 16;
 const TH = 16;
 const PT_PANEL_MAIN = { x: 240, y: 16 };
+const TEXTBOX_INFO = {
+    point: { x: 18, y: 228 },
+    width: 204,
+    height: 40
+};
+const TITLE_SCREEN_INFO_TEXT = "Press one of the context-sensitive keys to start";
 export class Game {
     constructor(theCtx) {
         this._ctx = theCtx;
@@ -26,11 +34,13 @@ export class Game {
                 this.loadImageBitmap(BORDER_PATH),
                 this.loadImageBitmap(TITLE_PATH),
                 this.loadImageBitmapSheet(SHEET_PATH, TW, TH),
+                this.loadImageBitmapSheet(FONT_PATH, CW, CH),
             ];
             Promise.all(images).then((theValues) => {
                 this._img_border = theValues[0];
                 this._img_title = theValues[1];
                 this._sprites = theValues[2];
+                this._info_textBox = new TextBox(TEXTBOX_INFO, theValues[3]);
                 this.draw();
             });
         });
@@ -79,5 +89,7 @@ export class Game {
         this._ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         this._ctx.drawImage(this._img_border, 0, 0);
         this._ctx.drawImage(this._img_title, PT_PANEL_MAIN.x, PT_PANEL_MAIN.y);
+        this._info_textBox.write(TITLE_SCREEN_INFO_TEXT);
+        this._ctx.drawImage(this._info_textBox.canvas, TEXTBOX_INFO.point.x, TEXTBOX_INFO.point.y);
     }
 }
