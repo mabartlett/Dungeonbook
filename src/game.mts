@@ -7,6 +7,7 @@
 
 import { Dungeon } from "./dungeon.mjs";
 import { TextBox, TextBoxParams, CW, CH } from "./textbox.mjs";
+import { Observer } from "./observer.mjs";
 
 /** Represents a pair of x and y coordinates. */
 export type Point = {
@@ -21,6 +22,11 @@ export const SCREEN_HEIGHT = 288;
 
 /** The width of the screen in pixels before scaling. */
 export const SCREEN_WIDTH = 512;
+
+/** The signals that can be emitted. */
+export enum SIGNALS {
+    GAME_START
+}
 
 /** The path to the border image. */
 const BORDER_PATH = "./img/border.png";
@@ -40,8 +46,29 @@ const TW = 16;
 /** The pixel height of each tile. */
 const TH = 16;
 
+/** The width of the side panels. */
+const SIDE_PANEL_WIDTH = 208;
+
 /** The top left corner of the main panel. */
 const PT_PANEL_MAIN: Point = {x: 240, y: 16};
+
+/** The number of context-sensitive buttons. */
+const BUTTONS_NUM = 6;
+
+/** The top left  corner of the buttons panel. */
+const PT_PANEL_BTNS: Point = {x: 16, y: 160};
+
+/** The right margin of the buttons in pixels. */
+const BTNS_MARGIN_RIGHT = -1;
+
+/** The top margin of the buttons in pixels. */
+const BTNS_MARGIN_TOP = 0;
+
+/** The pixel width of the context-sensitive buttons. */
+const BTNS_WIDTH = 70;
+
+/** The pixel height of the context-sensitive buttons. */
+const BTNS_HEIGHT = 24;
 
 /** The object containing all needed data for the main information textbox. */
 const TEXTBOX_INFO: TextBoxParams = {
@@ -51,12 +78,12 @@ const TEXTBOX_INFO: TextBoxParams = {
 }
 
 /** The text appearing in the information text box on the title screen. */
-const TITLE_SCREEN_INFO_TEXT = "Press one of the context-sensitive keys to start";
+const TITLE_SCREEN_INFO_TEXT = "Press one of the context-sensitive keys to start.";
 
 //#endregion
 
 /** The Game object is the root object of the world object heirarchy */
-export class Game {
+export class Game extends Observer {
 
     //#region Fields, Constructor
 
@@ -83,12 +110,18 @@ export class Game {
      * @param theCtx - The 2D canvas rendering context for the screen.
      */
     constructor(theCtx: CanvasRenderingContext2D) {
+        super();
         this._ctx = theCtx;
     }
 
     //#endregion
+
+    /** @override */
+    protected receiveSignal(theSender: Observer, theSignal: string | number): void {
+        
+    }
     
-    /** Starts the game. */
+    /** Starts the game by loading resources, drawing, and signalling. */
     async start() {
         this._ctx.imageSmoothingEnabled = false;
         const images = [
@@ -104,6 +137,7 @@ export class Game {
             this._info_textBox = new TextBox(TEXTBOX_INFO,
                 theValues[3] as ImageBitmap[]);
             this.draw();
+            this.emitSignal(SIGNALS.GAME_START);
         });
     }
 
@@ -164,10 +198,43 @@ export class Game {
 
     /** Draws everything to the screen. */
     draw() {
+        this.draw_background();
+        this.draw_title_screen();
+    }
+
+    /** Draws the background that remains the same throughout the whole game. */
+    draw_background() {
         this._ctx.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         this._ctx.fillStyle = "#000000";
         this._ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         this._ctx.drawImage(this._img_border, 0, 0);
+        this._ctx.strokeStyle = "#ffffff";
+        let rows = 1;
+        let cols = BUTTONS_NUM;
+        // Draw buttons panel background.
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                if ((BTNS_WIDTH + BTNS_MARGIN_RIGHT) * (j + 1) > SIDE_PANEL_WIDTH) {
+                    cols = j;
+                    if (cols * (rows + 1) <= BUTTONS_NUM) {
+                        rows++; 
+                    }
+                } else {
+                    let X_COMP = (BTNS_WIDTH + BTNS_MARGIN_RIGHT) * j;
+                    let Y_COMP = (BTNS_HEIGHT + BTNS_MARGIN_TOP) * i;
+                    this._ctx.strokeRect(
+                        PT_PANEL_BTNS.x + 0.5 + X_COMP,
+                        PT_PANEL_BTNS.y + 0.5 + Y_COMP,
+                        BTNS_WIDTH - 1, BTNS_HEIGHT - 1
+                    );
+                }
+            }
+            cols = BUTTONS_NUM;
+        }
+    }
+
+    /** Draws the graphics unique to the title screen. */
+    draw_title_screen() {
         this._ctx.drawImage(this._img_title, PT_PANEL_MAIN.x, PT_PANEL_MAIN.y);
         this._info_textBox.write(TITLE_SCREEN_INFO_TEXT);
         this._ctx.drawImage(this._info_textBox.canvas, TEXTBOX_INFO.point.x, 

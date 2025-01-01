@@ -4,7 +4,6 @@
  * @author Marcus Bartlett
  */
 
-import { start } from "repl";
 import { Game, SCREEN_HEIGHT, SCREEN_WIDTH } from "./game.mjs";
 import { test as testGame } from "./module-tests/testGame.mjs";
 
@@ -36,6 +35,11 @@ function main() {
     }
 }
 
+/**
+ * Constructs a new Game instance and calls its start method.
+ * @param theCanvas - The web page's main canvas element onto which all screen 
+ * graphics are drawn.
+ */
 async function startGame(theCanvas: HTMLCanvasElement) {
     const ctx = theCanvas.getContext("2d");
     if (ctx instanceof CanvasRenderingContext2D) {
