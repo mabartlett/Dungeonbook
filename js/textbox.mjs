@@ -3,7 +3,7 @@ export const CH = 8;
 const START_CODE = 32;
 const NEWLINE_CODE = 10;
 export class TextBox {
-    constructor(theParams, theFont) {
+    constructor(theParams, theFont, theScreen) {
         if (theParams.width <= 0) {
             throw new RangeError("Width must be positive.");
         }
@@ -13,17 +13,21 @@ export class TextBox {
         else {
             this._width = theParams.width;
             this._height = theParams.height;
+            this._x = theParams.point.x;
+            this._y = theParams.point.y;
             this._lineLen = 0;
             this._boxHeight = 0;
             this._string = "";
             if (TextBox.FONT === undefined) {
                 TextBox.FONT = theFont;
             }
+            this._screen = theScreen;
             this._canvas = document.createElement("canvas");
             this._ctx = this._canvas.getContext("2d");
         }
     }
     write(theText) {
+        this._string = "";
         if (theText !== "") {
             const lines = theText.split("\n");
             for (let i = 0; i < lines.length; i++) {
@@ -37,6 +41,7 @@ export class TextBox {
             }
         }
         this.updateCanvas();
+        this._screen.drawImage(this._canvas, this._x, this._y);
     }
     writeLine(theLine) {
         let words = theLine.split(" ");

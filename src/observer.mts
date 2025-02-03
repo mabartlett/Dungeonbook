@@ -36,7 +36,7 @@ export abstract class Observer {
      * Adds a subscriber to the list.
      * @param theSubscriber - The subscriber to add.
      */
-    subscribe(theSubscriber: Observer) {
+    public subscribe(theSubscriber: Observer) {
         if (!this._subscribers.has(theSubscriber)) {
             this._subscribers.add(theSubscriber);
         }
@@ -46,7 +46,7 @@ export abstract class Observer {
      * Removes a subscriber from the list.
      * @param theSubscriber - The subscriber to remove.
      */
-    unsubscribe(theSubscriber: Observer) {
+    public unsubscribe(theSubscriber: Observer) {
         if (this._subscribers.has(theSubscriber)) {
             this._subscribers.delete(theSubscriber);
         }
@@ -56,7 +56,7 @@ export abstract class Observer {
      * Publishes a signal to all subscribers.
      * @param theSignal - The signal to emit.
      */
-    emitSignal(theSignal: string | number) {
+    protected emitSignal(theSignal: string | number) {
         this._subscribers.forEach((theSub) => {
             theSub.receiveSignal(this, theSignal);
         });

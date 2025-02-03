@@ -43,6 +43,12 @@ export class TextBox {
     
     /** The total height of the bounding box, the sum of all drawn lines. */
     private _boxHeight: number;
+
+    /** The x-coordinate of the top-left corner. */
+    private _x: number;
+
+    /** The y-coordinate of the top-left corner; */
+    private _y: number;
     
     /** The actual text that will be drawn. */
     private _string: string;
@@ -52,13 +58,17 @@ export class TextBox {
 
     /** The rendering context of the canvas. */
     private _ctx: CanvasRenderingContext2D;
+
+    /** The rendering context onto which the text (itself a canvas) box is drawn. */
+    private _screen: CanvasRenderingContext2D;
     
     /**
      * Constructs a TextBox object.
      * @param theParams - The TextBoxParams containing point, width & height.
      * @param theFont - An array of ImageBitmaps, each of which is a character.
      */
-    constructor(theParams: TextBoxParams, theFont: ImageBitmap[]) {
+    constructor(theParams: TextBoxParams, theFont: ImageBitmap[], 
+            theScreen: CanvasRenderingContext2D) {
         if (theParams.width <= 0) {
             throw new RangeError("Width must be positive.");
         } else if (theParams.height <= 0) {
@@ -66,12 +76,15 @@ export class TextBox {
         } else {
             this._width = theParams.width;
             this._height = theParams.height;
+            this._x = theParams.point.x;
+            this._y = theParams.point.y;
             this._lineLen = 0;
             this._boxHeight = 0;
             this._string = "";
             if (TextBox.FONT === undefined) {
                 TextBox.FONT = theFont;
             }
+            this._screen = theScreen;
             this._canvas = document.createElement("canvas") as HTMLCanvasElement;
             this._ctx = this._canvas.getContext("2d") as CanvasRenderingContext2D;
         }
@@ -81,7 +94,8 @@ export class TextBox {
      * Writes a new string of text onto the text box.
      * @param theText - The string to be drawn.
      */
-    write(theText: string) {
+    write(theText: string): void {
+        this._string = "";
         if (theText !== "") {
             const lines = theText.split("\n");
             for (let i = 0; i < lines.length; i++) {
@@ -95,13 +109,14 @@ export class TextBox {
             }
         }
         this.updateCanvas();
+        this._screen.drawImage(this._canvas, this._x, this._y);
     }
 
     /**
      * Writes a line of text to the text box.
      * @param theLine - The line to write to the text box.
      */
-    writeLine(theLine: string) {
+    private writeLine(theLine: string): void {
         let words = theLine.split(" ");
         if (words[0].length * CW > this._width) {
             this.wrapWord(words[0]);
@@ -132,7 +147,7 @@ export class TextBox {
      * Wraps a single word across the text box.
      * @param theWord - The word to wrap.
      */
-    private wrapWord(theWord: string) {
+    private wrapWord(theWord: string): void {
         for (let i = 0; i < theWord.length; i++) {
             if (this._lineLen + CW <= this._width) {
                 this._lineLen += CW;
@@ -146,7 +161,7 @@ export class TextBox {
     }
 
     /** Updates the canvas with the new text. */
-    private updateCanvas() {
+    private updateCanvas(): void {
         this._ctx.clearRect(0, 0, this._width, this._height);
         let y = 0;
         let x = -CW;
